@@ -15,3 +15,4 @@ The Sentence Collector — GitHub Pages Edition (v13.1)
 Just past midnight, October 18, 2026
 
 editing and editing... 
+android ver- from v16
