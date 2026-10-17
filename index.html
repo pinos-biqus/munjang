@@ -1,0 +1,3045 @@
+<!DOCTYPE html>
+<!--
+  ══════════════════════════════════════════════════════
+  유지보수 지침: 기능을 추가·수정했을 때 반드시 실행
+  1. 아래 스크립트의 APP_VERSION 값을 한 단계 올린다 (예: "v13").
+  2. RELEASE_LOG 배열 맨 앞에 항목을 하나 추가한다:
+     { v:"v13", date:"YYYY-MM-DD", title:"한 줄 요약", body:"무엇을 바꿨는지" }
+     → 복구 화면의 버전 이력 모달은 이 데이터를 자동으로 그린다.
+       모달 HTML·CSS는 건드릴 필요 없다.
+  3. 파일 안의 "vigaonda-13-1" 안내 문구를 새 버전명으로 바꾼다.
+  ══════════════════════════════════════════════════════
+-->
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>문장수집가</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="문장수집가">
+<meta name="theme-color" content="#2b2622">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23c9a86a'/%3E%3Ctext x='50' y='72' font-size='64' text-anchor='middle' fill='%232b2622' font-family='Georgia'%3E%22%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --paper:#faf7f0;
+    --paper-2:#fffdf8;
+    --ink:#2b2622;
+    --ink-soft:#6b625a;
+    --line:#e3dbcd;
+    --accent:#8a6a3b;
+    --accent-soft:#f0e6d4;
+    --danger:#b3453a;
+    --shadow:0 10px 30px rgba(60,45,20,.10);
+    --radius:14px;
+    /* 신규: 표면/보조 색 */
+    --surface:#fff;
+    --surface-2:#fffefb;
+    --hover:#f7f2e8;
+    --row-hover:#fbf6ec;
+    --line-strong:#d8c7a5;
+    --muted:#a79d90;
+    --placeholder:#bdb3a6;
+    --ink-2:#3a3229;
+    --inspire-a:#fffdf8;
+    --inspire-b:#f7efe0;
+    --danger-soft:#fbeeec;
+    --danger-line:#e8cfcb;
+    --focus-ring:rgba(216,199,165,.28);
+    --quote:rgba(138,106,59,.10);
+    --bg-glow-1:#fff8e9;
+    --bg-glow-2:#f4efe4;
+    --toast-bg:#2b2622;
+    --toast-ink:#fff;
+    --dial-pink:#ffe9e6;
+    --dial-num:#f2908a;
+  }
+
+  /* 다크 모드: html[data-theme="dark"] */
+  [data-theme="dark"]{
+    --paper:#141210;
+    --paper-2:#1d1a16;
+    --ink:#ece5da;
+    --ink-soft:#a89e91;
+    --ink-2:#ddd4c7;
+    --line:#332d27;
+    --line-strong:#4b4136;
+    --accent:#d3ab6c;
+    --accent-soft:#2a231a;
+    --danger:#e2837a;
+    --danger-soft:#33211f;
+    --danger-line:#5a3733;
+    --muted:#8d8377;
+    --placeholder:#6f675c;
+    --surface:#221e1a;
+    --surface-2:#1f1b17;
+    --hover:#2a241d;
+    --row-hover:#251f19;
+    --inspire-a:#1e1a15;
+    --inspire-b:#241d13;
+    --focus-ring:rgba(211,171,108,.22);
+    --quote:rgba(211,171,108,.10);
+    --bg-glow-1:#241f18;
+    --bg-glow-2:#1a1712;
+    --toast-bg:#ece5da;
+    --toast-ink:#17140f;
+    --shadow:0 10px 30px rgba(0,0,0,.5);
+    --dial-pink:#2c1c1b;
+    --dial-num:#c9776f;
+  }
+  [data-theme="dark"] .btn.primary,
+  [data-theme="dark"] .segbtn.on{color:#17140f}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    background:
+      radial-gradient(1200px 600px at 10% -10%, var(--bg-glow-1) 0%, rgba(255,248,233,0) 60%),
+      radial-gradient(900px 500px at 100% 0%, var(--bg-glow-2) 0%, rgba(244,239,228,0) 55%),
+      var(--paper);
+    color:var(--ink);
+    font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:940px;margin:0 auto;padding:18px 16px 60px}
+
+  /* ---------- header: 제목 + 버튼·타이머 한 줄 ---------- */
+  header.top{
+    display:grid;grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"brand" "tools";
+    align-items:start;gap:12px 14px;
+    padding:14px 16px;background:var(--paper-2);
+    border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);position:sticky;top:10px;z-index:30;
+  }
+  .brand{grid-area:brand;display:flex;align-items:center;gap:10px;min-width:0}
+  .brand .mark{
+    width:38px;height:38px;flex:0 0 38px;border-radius:11px;
+    background:linear-gradient(140deg,#8a6a3b,#c9a86a);
+    color:#fff;display:grid;place-items:center;font-size:19px;
+    box-shadow:0 4px 12px rgba(138,106,59,.35);
+  }
+  .brand h1{
+    margin:0;font-size:20px;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    display:inline-block;text-decoration:underline wavy var(--accent) 2px;text-underline-offset:7px
+  }
+  .brand h1 span{color:var(--accent)}
+  .brand .sub{font-size:11.5px;color:var(--ink-soft);margin-top:2px}
+  /* 버튼과 타이머를 하나의 박스에 한 줄로 나열합니다. */
+  .toolbar{
+    grid-area:tools;display:grid;grid-template-columns:repeat(8,minmax(0,1fr)) minmax(150px,auto);
+    background:var(--surface);border:1px solid var(--line);border-radius:12px
+  }
+  /* 팝업이 밖으로 나올 수 있게 overflow를 막지 않고, 대신 양끝 칸만 라운딩 */
+  .toolbar > :first-child{border-radius:12px 0 0 12px}
+  .toolbar > :last-child{border-radius:0 12px 12px 0}
+  .toolbar .tbtn{
+    border:0;border-radius:0;background:transparent;justify-content:flex-start;
+    padding:9px 10px;font-size:12.5px;
+    box-shadow:1px 0 0 var(--line),0 1px 0 var(--line)
+  }
+  .toolbar .tbtn:hover{background:var(--accent-soft);transform:none}
+  .toolbar .tbtn.warn{color:var(--danger)}
+  .tbtn{
+    appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    padding:8px 11px;border-radius:10px;font-size:12.5px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;line-height:1;white-space:nowrap;
+    transition:.15s;
+  }
+  .tbtn:hover{background:var(--accent-soft);border-color:var(--line-strong);transform:translateY(-1px)}
+  .tbtn:active{transform:translateY(0)}
+  .tbtn .ico{font-size:14px}
+  .tbtn.warn{color:var(--danger)}
+
+  /* ---------- 집중 타이머 (헤더 우측) ---------- */
+  /* 왼쪽 메뉴 버튼(툴바 버튼)과 같은 높이의 얇은 한 줄 카드 */
+  .focus{
+    align-self:stretch;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;position:relative;
+    background:transparent;
+    padding:5px 10px;
+    box-shadow:1px 0 0 var(--line)
+  }
+  /* 넘김 카드 숫자(A안): 가운데 가로 틈이 있는 아이보리 카드 */
+  .fxclockbtn{
+    appearance:none;border:0;background:transparent;padding:0;margin:0;cursor:pointer;
+    display:block;font-family:inherit;border-radius:10px
+  }
+  .fxclockbtn:focus-visible{outline:2px solid var(--line-strong);outline-offset:3px}
+  .fxclock{
+    display:flex;align-items:center;justify-content:center;gap:2px;
+    font-size:20px;line-height:1.15;font-variant-numeric:tabular-nums;color:var(--ink)
+  }
+  .fxclock.compact{font-size:19px}
+  /* 오직 숫자만: 카드·틈 없이 글자 그대로 */
+  .fxd{display:inline;font-weight:700;letter-spacing:-.5px}
+  .fxn{display:inline}
+  .fxcolon{padding:0 3px;color:var(--muted);font-weight:700}
+  /* 터치 영역: 앞쪽(분)=설정 팝업, 뒤쪽(초)=시작·일시정지 */
+  .fxgrp{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .15s}
+  .fxgrp:hover{opacity:.7}
+  /* 일시정지 상태: 숫자를 살짝 흐리게 (끝남이 아니라 멈춰 있음을 표시) */
+  .focus.paused .fxgrp{opacity:.45}
+  .fxbtn{
+    appearance:none;border:1px solid var(--line);background:var(--paper-2);color:var(--ink);
+    border-radius:8px;padding:5px 9px;font-size:11.5px;font-family:inherit;cursor:pointer;white-space:nowrap
+  }
+  .fxbtn:hover{background:var(--accent-soft);border-color:var(--line-strong)}
+  .fxbtn.go{background:linear-gradient(140deg,#8a6a3b,#a98a55);color:#fff;border-color:transparent}
+  .fxbtn.go:hover{filter:brightness(1.06)}
+  .focus.running{background:var(--accent-soft)}
+  .focus.done{animation:fxpulse 1s ease-in-out infinite}
+  @keyframes fxpulse{0%,100%{box-shadow:1px 0 0 var(--line),0 0 0 0 rgba(179,69,58,0)}50%{box-shadow:1px 0 0 var(--line),0 0 0 7px rgba(179,69,58,.18)}}
+  .fxpop{
+    position:absolute;right:0;top:calc(100% + 8px);z-index:60;width:238px;
+    background:var(--paper-2);border:1px solid var(--line);border-radius:14px;
+    box-shadow:0 18px 44px rgba(40,30,10,.24);padding:13px;display:none
+  }
+  .fxpop.open{display:block}
+  .fxpop h4{margin:0 0 9px;font-size:12.5px}
+  .fxgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+  .fxpre{
+    appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    border-radius:9px;padding:8px 4px;font-size:12px;font-family:inherit;cursor:pointer
+  }
+  .fxpre:hover{background:var(--accent-soft);border-color:var(--line-strong)}
+  .fxpre.on{background:var(--accent);color:#fff;border-color:transparent}
+  .fxpop .fxinrow{display:flex;gap:6px;align-items:center;margin-bottom:9px}
+  .fxpop input[type="number"]{
+    flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    border-radius:9px;padding:8px 10px;font-size:12.5px;font-family:inherit;outline:none
+  }
+  .fxpop input[type="number"]:focus{border-color:var(--line-strong);box-shadow:0 0 0 3px var(--focus-ring)}
+  .fxswitch{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink-soft);cursor:pointer}
+  @media(max-width:760px){
+    header.top{grid-template-columns:minmax(0,1fr);grid-template-areas:"brand" "tools"}
+    .focus{justify-content:center;min-width:0;grid-column:1/-1}
+    .toolbar{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .fxpop{left:0;right:auto;width:100%}
+  }
+  @media(max-width:620px){
+    .fxclock{font-size:19px}
+    .fxclock.compact{font-size:15px}
+  }
+
+  /* ---------- status strip ---------- */
+  .statusbar{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    flex-wrap:wrap;margin:14px 2px 8px;font-size:12.5px;color:var(--ink-soft)
+  }
+  .pill{
+    display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);
+    padding:6px 11px;border-radius:999px
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:#4caf7d;box-shadow:0 0 0 3px rgba(76,175,125,.16)}
+  .dot.off{background:#c9c1b6;box-shadow:0 0 0 3px rgba(201,193,182,.2)}
+
+  /* ---------- inspiration card ---------- */
+  .inspire{
+    background:linear-gradient(135deg,var(--inspire-a),var(--inspire-b));
+    border:1px solid var(--line);border-left:5px solid var(--accent);
+    border-radius:var(--radius);padding:16px 18px;margin:0 0 14px;box-shadow:var(--shadow);
+    position:relative;overflow:hidden;
+  }
+  .inspire::after{
+    content:"❞";position:absolute;right:14px;top:-8px;font-size:74px;color:var(--quote);font-family:Georgia,serif
+  }
+  .inspire .lbl{
+    font-size:11.5px;letter-spacing:1.4px;color:var(--accent);font-weight:700;margin-bottom:8px;
+    display:flex;align-items:center;gap:7px
+  }
+  .inspire .txt{
+    font-family:Georgia,"Nanum Myeongjo","Noto Serif KR",serif;
+    font-size:17.5px;line-height:1.75;color:var(--ink-2);margin:0;position:relative;z-index:1
+  }
+  .inspire .acts{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap;position:relative;z-index:2}
+
+  /* ---------- 글감 추가(카드 내 인라인 입력) + 내 글감 목록 ---------- */
+  .addbox{
+    display:none;margin-top:12px;padding:12px 13px;border:1px dashed var(--line-strong);
+    border-radius:12px;background:var(--surface);position:relative;z-index:3
+  }
+  .addbox.open{display:block}
+  .addbox .addlbl{display:block;font-size:11.5px;color:var(--ink-soft);margin-bottom:8px}
+  .addbox .addlbl b{color:var(--accent)}
+  .addbox .addrow{display:flex;gap:7px;flex-wrap:wrap}
+  #promptInput{
+    flex:1;min-width:170px;border:1px solid var(--line);background:var(--paper-2);color:var(--ink);
+    border-radius:10px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none
+  }
+  #promptInput:focus{border-color:var(--line-strong);box-shadow:0 0 0 3px var(--focus-ring)}
+  .mybox{margin-top:13px;position:relative;z-index:3}
+  .mybox .mylbl{font-size:11.5px;color:var(--ink-soft);margin-bottom:7px}
+  .mybox .mylbl b{color:var(--accent)}
+  .mybox .warn{color:var(--danger);font-size:11px}
+  .prompt-list{display:flex;flex-direction:column;gap:5px}
+  .prompt-item{
+    display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink);
+    background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:6px 9px
+  }
+  .prompt-item .p{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .prompt-item .use{
+    appearance:none;border:0;background:transparent;color:var(--accent);font-size:11.5px;
+    cursor:pointer;font-family:inherit;white-space:nowrap
+  }
+  .prompt-item .rm{
+    appearance:none;border:0;background:transparent;color:var(--placeholder);font-size:14px;
+    cursor:pointer;line-height:1;padding:2px 4px;border-radius:6px
+  }
+  .prompt-item .rm:hover{color:var(--danger);background:var(--danger-soft)}
+
+  /* ---------- editor ---------- */
+  .editor-wrap{
+    background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden
+  }
+  .editor-head{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:11px 16px;border-bottom:1px solid var(--line);background:var(--surface-2);flex-wrap:wrap
+  }
+  .editor-head .t{font-size:12.5px;color:var(--ink-soft)}
+  .editor-head .t b{color:var(--accent)}
+  .editor-head .meta{font-size:11.5px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+  textarea#paper{
+    width:100%;min-height:400px;border:0;outline:none;resize:vertical;
+    padding:26px 28px;background:transparent;color:var(--ink);
+    font-family:Georgia,"Nanum Myeongjo","Noto Serif KR",serif;
+    font-size:17px;line-height:2.0;letter-spacing:.1px
+  }
+  textarea#paper::placeholder{color:var(--placeholder)}
+  .editor-foot{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:10px 16px;border-top:1px solid var(--line);background:var(--surface-2);font-size:12px;color:var(--ink-soft)
+  }
+
+  /* ---------- library ---------- */
+  .panel{
+    background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);margin-top:16px;overflow:hidden
+  }
+  .panel > .ph{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:13px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)
+  }
+  .panel > .ph h2{margin:0;font-size:14.5px}
+  .panel > .ph .cnt{font-size:12px;color:var(--ink-soft)}
+  .doc-list{list-style:none;margin:0;padding:6px}
+  .doc-list li{
+    display:flex;align-items:center;gap:12px;padding:12px 12px;border-radius:10px;cursor:pointer;
+    border:1px solid transparent;transition:.15s
+  }
+  .doc-list li:hover{background:var(--row-hover);border-color:var(--line)}
+  .doc-list li.active{background:var(--accent-soft);border-color:var(--line-strong)}
+  .doc-list .num{
+    flex:0 0 30px;height:30px;border-radius:9px;background:var(--surface);border:1px solid var(--line);
+    display:grid;place-items:center;font-size:12px;color:var(--accent);font-weight:700
+  }
+  .doc-list .body{flex:1;min-width:0}
+  .doc-list .ttl{
+    font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+  }
+  .doc-list .prev{
+    font-size:11.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px
+  }
+  .doc-list .when{font-size:11px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .doc-list .del{
+    appearance:none;border:0;background:transparent;color:var(--placeholder);font-size:15px;cursor:pointer;
+    padding:4px 6px;border-radius:8px;line-height:1
+  }
+  .doc-list .del:hover{color:var(--danger);background:var(--danger-soft)}
+  .empty{padding:26px 16px;text-align:center;color:var(--muted);font-size:13px}
+
+  /* ---------- 이력 · 휴지통 복구 ---------- */
+
+  /* ---------- 버전 이력 ---------- */
+  .verlist{display:flex;flex-direction:column;gap:10px}
+  .ver{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface)}
+  .ver .vh{display:flex;gap:8px;align-items:baseline;margin-bottom:4px;flex-wrap:wrap}
+  .ver .vh b{font-size:13px}
+  .ver .vh span{font-size:11px;opacity:.65}
+  .ver p{margin:0;font-size:12px;line-height:1.65}
+  .modal.recover{max-width:620px}
+  .recoverbody{max-height:58vh;overflow:auto}
+  .recover .sec{margin:0 0 18px}
+  .recover .sec:last-child{margin-bottom:0}
+  .recover h4{margin:0 0 7px;font-size:13px;display:flex;align-items:center;gap:7px;color:var(--ink)}
+  .recover h4 .c{font-size:11.5px;color:var(--muted);font-weight:400}
+  .recover .note{font-size:11.5px;color:var(--muted);line-height:1.65;margin:0 0 8px}
+  .recover .doc-list{padding:0}
+  .recover .doc-list li{padding:9px 10px;gap:8px;flex-wrap:wrap}
+  .recover .rbtn{
+    appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    border-radius:8px;padding:5px 9px;font-size:11.5px;cursor:pointer;font-family:inherit;white-space:nowrap
+  }
+  .recover .rbtn:hover{background:var(--accent-soft);border-color:var(--line-strong)}
+  .recover .rbtn.dng{color:var(--danger);border-color:var(--danger-line)}
+  .recover .rbtn.dng:hover{background:var(--danger-soft)}
+
+  /* ---------- modal ---------- */
+  .backdrop{
+    position:fixed;inset:0;background:rgba(43,38,34,.42);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;padding:18px;z-index:100
+  }
+  .backdrop.show{display:flex}
+  .modal{
+    background:var(--paper-2);border-radius:16px;width:100%;max-width:520px;
+    box-shadow:0 24px 60px rgba(40,30,10,.32);overflow:hidden;
+    animation:pop .18s ease-out
+  }
+  @keyframes pop{from{transform:translateY(10px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+  .modal .mh{
+    padding:15px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center
+  }
+  .modal .mh h3{margin:0;font-size:15px}
+  .modal .mh .x{border:0;background:transparent;font-size:19px;color:var(--muted);cursor:pointer;line-height:1}
+  .modal .mb{padding:18px}
+  .modal .mb p{margin:0 0 12px;font-size:13.5px;color:var(--ink-soft);line-height:1.7}
+  .modal .mb textarea,.modal .mb input{
+    width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:13.5px;
+    font-family:inherit;outline:none;background:var(--surface);color:var(--ink)
+  }
+  .modal .mb textarea{min-height:96px;resize:vertical;line-height:1.7}
+  .modal .mb input:focus,.modal .mb textarea:focus{border-color:var(--line-strong);box-shadow:0 0 0 3px var(--focus-ring)}
+  .modal .mf{
+    padding:13px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;background:var(--surface-2)
+  }
+  .btn{
+    appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    padding:9px 15px;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit
+  }
+  .btn:hover{background:var(--hover)}
+  .btn.primary{background:linear-gradient(140deg,#8a6a3b,#a98a55);color:#fff;border-color:transparent}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.danger{background:var(--surface);color:var(--danger);border-color:var(--danger-line)}
+  .btn.danger:hover{background:var(--danger-soft)}
+  .aiout{
+    white-space:pre-wrap;font-size:14px;line-height:1.9;background:var(--surface);border:1px solid var(--line);
+    border-radius:10px;padding:14px;max-height:320px;overflow:auto;font-family:Georgia,"Nanum Myeongjo",serif
+  }
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line-strong);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  /* ---------- toast ---------- */
+  #toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+    background:var(--toast-bg);color:var(--toast-ink);padding:11px 18px;border-radius:999px;font-size:13px;
+    opacity:0;pointer-events:none;transition:.25s;z-index:200;box-shadow:0 12px 30px rgba(0,0,0,.28)
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:9px;line-height:1.6}
+
+  /* ---------- 내보내기 형식 선택 ---------- */
+  .expgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .expcard{
+    text-align:left;appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    border-radius:11px;padding:11px 13px;cursor:pointer;font-family:inherit;
+    display:flex;flex-direction:column;gap:3px;transition:.15s
+  }
+  .expcard:hover{background:var(--accent-soft);border-color:var(--line-strong);transform:translateY(-1px)}
+  .expcard b{font-size:13px}
+  .expcard span{font-size:11px;color:var(--ink-soft)}
+
+  /* ---------- 저장 폴더 도우미 ---------- */
+  .savedir{margin:10px 0 4px;padding:11px 12px;border:1px dashed var(--line-strong);border-radius:11px;background:var(--surface-2)}
+  .savedir .sdrow{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .savedir .sdname{font-size:12px;font-weight:700;color:var(--ink-soft)}
+  .savedir .sdmode{margin:7px 0 0;font-size:11.5px;line-height:1.65;color:var(--ink-soft)}
+  .dropzone{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;
+    background:rgba(43,38,34,.55);padding:20px}
+  .dropzone.on{display:flex}
+  .dropzone span{border:2px dashed rgba(255,255,255,.72);border-radius:16px;padding:24px 32px;
+    background:rgba(43,38,34,.42);color:#fff;font-size:15px;font-weight:700;text-align:center}
+
+  /* ---------- 인쇄 / PDF ---------- */
+  #printArea{display:none}
+  @media print{
+    body{background:#fff !important;color:#000 !important}
+    .app,.backdrop,#toast{display:none !important}
+    #printArea{display:block !important;max-width:none;margin:0;padding:0}
+    #printArea .print-head{font-size:19pt;font-weight:700;margin:0 0 4pt}
+    #printArea .print-sub{font-size:10pt;color:#444;margin:0 0 20pt}
+    #printArea .print-doc{page-break-inside:avoid;margin:0 0 26pt;padding-bottom:14pt;border-bottom:1px solid #ccc}
+    #printArea .print-doc h2{font-size:14pt;margin:0 0 3pt}
+    #printArea .print-doc .meta{font-size:9pt;color:#555;margin:0 0 8pt}
+    #printArea .body{font-size:11pt;line-height:1.85}
+  }
+  @media(max-width:620px){
+    .brand h1{font-size:16.5px}
+    textarea#paper{padding:18px 16px;font-size:16px;line-height:1.95;min-height:320px}
+    .app{padding:12px 10px 48px}
+  }
+  /* ---------- 신규: 세그먼트 / 검색 / 태그 / 마크다운 미리보기 ---------- */
+  .head-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+  .segbtn{appearance:none;border:0;background:transparent;color:var(--ink-soft);font-family:inherit;font-size:12px;padding:7px 12px;cursor:pointer}
+  .segbtn.on{background:var(--accent);color:#fff}
+  .ph-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  #searchInput{
+    width:215px;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    border-radius:999px;padding:7px 13px;font-size:12.5px;font-family:inherit;outline:none
+  }
+  #searchInput:focus{border-color:var(--line-strong);box-shadow:0 0 0 3px var(--focus-ring)}
+  .tagrow{
+    display:flex;align-items:center;gap:9px;padding:10px 16px;border-bottom:1px solid var(--line);
+    background:var(--surface-2);flex-wrap:wrap
+  }
+  .tagrow .taglbl{font-size:11.5px;color:var(--ink-soft);white-space:nowrap}
+  #tagInput{
+    flex:1;min-width:160px;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    border-radius:9px;padding:7px 11px;font-size:12.5px;font-family:inherit;outline:none
+  }
+  #tagInput:focus{border-color:var(--line-strong);box-shadow:0 0 0 3px var(--focus-ring)}
+  .chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+  .chip{
+    font-size:10.5px;color:var(--accent);background:var(--accent-soft);border:1px solid var(--line);
+    padding:2px 8px;border-radius:999px;white-space:nowrap
+  }
+  .md-preview{
+    padding:26px 28px;min-height:400px;font-family:Georgia,"Nanum Myeongjo","Noto Serif KR",serif;
+    font-size:16.5px;line-height:1.95;color:var(--ink);overflow-wrap:break-word
+  }
+  .md-preview > :first-child{margin-top:0}
+  .md-preview h1,.md-preview h2,.md-preview h3,.md-preview h4{line-height:1.4;margin:1.4em 0 .6em;letter-spacing:-.2px}
+  .md-preview h1{font-size:1.6em;border-bottom:1px solid var(--line);padding-bottom:.3em}
+  .md-preview h2{font-size:1.35em}
+  .md-preview h3{font-size:1.15em}
+  .md-preview h4{font-size:1.02em;color:var(--ink-soft)}
+  .md-preview p{margin:.85em 0}
+  .md-preview ul,.md-preview ol{margin:.8em 0;padding-left:1.5em}
+  .md-preview li{margin:.3em 0}
+  .md-preview blockquote{
+    margin:1em 0;padding:.6em 1em;border-left:4px solid var(--accent);background:var(--accent-soft);
+    color:var(--ink-soft);border-radius:0 10px 10px 0
+  }
+  .md-preview code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em;
+    background:var(--accent-soft);border:1px solid var(--line);border-radius:6px;padding:1px 5px
+  }
+  .md-preview pre{
+    background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    overflow:auto;line-height:1.6
+  }
+  .md-preview pre code{background:none;border:0;padding:0}
+  .md-preview hr{border:0;border-top:1px solid var(--line);margin:1.6em 0}
+  .md-preview a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+  .md-preview del{color:var(--muted)}
+  .md-preview .md-empty{color:var(--muted);font-style:italic}
+  @media(max-width:620px){
+    .md-preview{padding:18px 16px;font-size:16px}
+    .ph-tools{width:100%}
+    #searchInput{width:100%}
+    .head-tools{width:100%;justify-content:space-between}
+    .expgrid{grid-template-columns:1fr}
+  }
+  /* ---------- AI 설정(키) 영역 ---------- */
+  .keybar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 10px}
+  .keylink{background:none;border:0;padding:0;color:var(--accent);font-size:12.5px;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .keystate{font-size:11.5px;color:var(--muted)}
+  .keystate.ok{color:#2f7d4f}
+  .keypanel{display:none;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface-2);margin:0 0 12px}
+  .keypanel.open{display:block}
+  .keypanel .keyhint{margin:0 0 9px;font-size:12px;color:var(--ink-soft)}
+  .keypanel input{width:100%}
+  .keyrow{display:flex;gap:7px;justify-content:flex-end;margin-top:9px}
+  [data-theme="dark"] .keystate.ok{color:#8fd6a9}
+  /* ---------- 문장 다듬기 미리보기 ---------- */
+  #polishMode{margin:0 0 8px;font-size:12px;color:var(--ink-soft);line-height:1.6}
+  .polishgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:6px 0 10px}
+  .pcol{min-width:0}
+  .plabel{font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:5px}
+  .pbox{margin:0;max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-word;
+        background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+        font-size:12.5px;line-height:1.65;font-family:inherit;color:var(--ink-soft)}
+  #polishAfter{background:var(--accent-soft);color:var(--ink)}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 10px;min-height:20px}
+  .chip{font-size:11px;padding:2px 7px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-soft)}
+  @media(max-width:620px){ .polishgrid{grid-template-columns:1fr} .pbox{max-height:150px} }
+
+  /* 버전 이력 모달: 내용이 길어도 화면 안에 들어오도록 높이를 제한하고 내부 스크롤 */
+  #mdVer .modal{max-height:min(84vh,780px);display:flex;flex-direction:column;overflow:hidden}
+  #mdVer .mb{flex:1;min-height:0;overflow-y:auto}
+  body.kb-open header.top{position:static}
+</style>
+<script>
+  /* 저장된 테마를 첫 페인트 전에 적용해 깜빡임을 막습니다. */
+  (function () {
+    try {
+      var s = JSON.parse(localStorage.getItem("vigaonda.munjang.v1") || "{}");
+      var t = s.theme;
+      if (t !== "dark" && t !== "light") {
+        t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+      }
+      document.documentElement.setAttribute("data-theme", t);
+    } catch (e) {}
+  })();
+</script>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="brand">
+      <div class="mark">❞</div>
+      <div style="min-width:0">
+        <h1>문장수집가</h1>
+        <div class="sub">영감을 모으고, 문장으로 남기는 나만의 서재</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="tbtn primary" id="btnSave" title="서재에 보관하고 새 글 시작">저장</button>
+      <button class="tbtn" id="btnNew" title="빈 페이지에서 새로 쓰기 (확인 후 비움)">새글</button>
+      <button class="tbtn" id="btnMail" title="이메일로 전송">전송</button>
+      <button class="tbtn" id="btnImport" title="JSON 백업 파일 가져오기 (복원)">가져오기</button>
+      <button class="tbtn" id="btnExport" title="서재를 파일로 내보내기 (JSON·TXT·MD·DOC·PDF)">내보내기</button>
+      <button class="tbtn" id="btnRecover" title="초안 이력·휴지통·이전 버전에서 되살리기">복구</button>
+      <button class="tbtn" id="btnTheme" title="다크 모드로 전환">다크</button>
+      <button class="tbtn" id="btnAi" title="본문 문장 다듬기 (미리보기 후 적용)">문장 다듬기</button>
+    <!-- ===== 집중 타이머: 숫자만 표시 (터치로 시작·일시정지·되돌리기·설정) ===== -->
+    <div class="focus" id="focusBox">
+      <button class="fxclockbtn" id="fxClockBtn" type="button" title="분: 시간 설정 · 나머지 숫자: 시작·일시정지 (실행 중·일시정지에서 더블탭: 처음으로)" aria-label="집중 타이머: 분을 누르면 시간 설정, 나머지 숫자를 누르면 시작 또는 일시정지, 실행 중이나 일시정지 상태에서 빠르게 두 번 누르면 처음으로 되돌아갑니다">
+        <span class="fxclock" id="fxClock"></span>
+      </button>
+      <div class="fxpop" id="fxPop">
+        <h4>⏱ 집중 시간 설정</h4>
+        <div class="fxgrid" id="fxPresets"></div>
+        <div class="fxinrow">
+          <input type="number" id="fxMin" min="1" max="180" step="1" value="25">
+          <span style="font-size:12px;color:var(--ink-soft)">분</span>
+          <button class="fxbtn" id="fxApply">적용</button>
+        </div>
+        <label class="fxswitch"><input type="checkbox" id="fxSound" checked> 시간이 끝나면 소리로도 알려주기</label>
+        <label class="fxswitch" style="justify-content:space-between"> 숫자 간격
+          <select id="fxStep" style="border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 8px;font-size:11.5px;font-family:inherit">
+            <option value="1">1초마다 (실제 시간)</option>
+            <option value="3">3초 간격</option>
+            <option value="5">5초 간격</option>
+            <option value="10">10초 간격</option>
+          </select>
+        </label>
+        <p class="hint" style="margin-top:8px">분 숫자를 누르면 이 설정이 열리고, 초(오른쪽) 숫자를 누르면 시작·일시정지가 됩니다. 실행 중이거나 일시정지 상태에서 빠르게 두 번 누르면 처음으로 되돌아가고, 0:00이 끝난 뒤에 눌러도 처음으로 돌아갑니다. 실행 중에 시간을 바꾸면 이미 흐른 만큼은 남기고 이어갑니다. 간격은 1·3·5·10초 중에서 고를 수 있습니다.</p>
+      </div>
+    </div>
+    </div>
+
+  </header>
+
+  <div class="statusbar">
+    <span class="pill"><span class="dot" id="saveDot"></span><span id="saveState">자동 저장 준비됨</span></span>
+    <span class="pill">🕒 마지막 수정: <b id="lastMod">기록 없음</b></span>
+    <span class="pill">✍️ <b id="charCount">0</b>자 · <b id="wordCount">0</b>단어</span>
+  </div>
+
+  <section class="inspire">
+    <div class="lbl">💡 오늘의 영감</div>
+    <p class="txt" id="inspireText">글감을 불러오는 중…</p>
+    <div class="acts">
+      <button class="tbtn" id="btnNewInspire"><span class="ico">🔄</span>다른 글감</button>
+      <button class="tbtn" id="btnAddInspire"><span class="ico">＋</span>글감 추가</button>
+      <button class="tbtn" id="btnUseInspire"><span class="ico">⤵</span>본문에 넣기</button>
+    </div>
+
+    <!-- 글감 추가: 모달 오버레이 대신 카드 안에서 바로 입력합니다 (어떤 환경에서도 클릭이 막히지 않음) -->
+    <div class="addbox" id="addBox">
+      <label class="addlbl" for="promptInput">새 글감 문장을 적고 <b>추가</b>를 누르세요 (Enter로도 추가됩니다)</label>
+      <div class="addrow">
+        <input type="text" id="promptInput" placeholder="예) 오늘 가장 오래 바라본 것에 대해 써보기" autocomplete="off">
+        <button class="btn primary" id="promptOk">추가</button>
+        <button class="btn" id="promptCancel">닫기</button>
+      </div>
+    </div>
+
+    <div class="mybox" id="myBox">
+      <div class="mylbl">🗂️ 내가 추가한 글감 <b id="myCount">0</b>개 <span class="warn" id="storeWarn"></span></div>
+      <div class="prompt-list" id="myPrompts"></div>
+    </div>
+  </section>
+
+  <section class="editor-wrap">
+    <div class="editor-head">
+      <div class="t">제목: <b id="curTitle">제목 없음 (저장 시 첫 줄로 자동 설정)</b></div>
+      <div class="head-tools">
+        <span class="meta" id="editMode">새 글 작성 중</span>
+        <span class="seg">
+          <button class="segbtn on" id="btnViewWrite">글쓰기</button>
+          <button class="segbtn" id="btnViewPrev">미리보기</button>
+        </span>
+      </div>
+    </div>
+    <div class="tagrow">
+      <span class="taglbl">🏷️ 태그</span>
+      <input type="text" id="tagInput" placeholder="쉼표로 구분해 입력 (예: 여행, 에세이) — 검색에도 함께 사용됩니다">
+    </div>
+    <textarea id="paper" placeholder="첫 문장을 적어보세요. 쓰는 동안 자동으로 저장됩니다." spellcheck="false"></textarea>
+    <div class="md-preview" id="preview" style="display:none"></div>
+    <div class="editor-foot">
+      <span>💾 저장 버튼을 누르면 <b>서재에 보관</b>되고 화면이 비워지며 <b>새 영감</b>이 나타납니다.</span>
+      <span id="autosaveInfo">자동 저장: 꺼짐</span>
+      <span id="safetyInfo">🛡️ 이력 0개 · 휴지통 0개</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="ph">
+      <h2>📚 내 서재</h2>
+      <div class="ph-tools">
+        <input type="search" id="searchInput" placeholder="🔍 제목·본문·태그 검색" autocomplete="off">
+        <span class="cnt" id="libCount">0편</span>
+      </div>
+    </div>
+    <ul class="doc-list" id="docList"></ul>
+    <div class="empty" id="libEmpty">아직 보관된 글이 없습니다. 첫 문장을 써보세요.</div>
+  </section>
+
+</div>
+
+<!-- 글감 추가는 카드 안 인라인 입력창(#addBox)으로 처리하므로 별도 모달을 두지 않습니다.
+     (오버레이 방식은 일부 미리보기 환경에서 클릭이 막히거나 화면 밖에 그려질 수 있었습니다.) -->
+
+<!-- ===== 모달: 초기화 확인 ===== -->
+<div class="backdrop" id="mdReset">
+  <div class="modal">
+    <div class="mh"><h3>📝 새 글 시작 확인</h3><button class="x" data-close="mdReset">✕</button></div>
+    <div class="mb">
+      <p>지금 쓰고 있는 내용을 비우고 빈 페이지에서 새로 시작합니다.<br>서재에 저장된 글은 그대로 남고, 비우기 직전 내용은 ‘🕘 복구 → 작성 이력’에 남습니다. 계속할까요?</p>
+    </div>
+    <div class="mf">
+      <button class="btn" data-close="mdReset">취소</button>
+      <button class="btn primary" id="resetOk">새로 시작</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 모달: 삭제 확인 ===== -->
+<div class="backdrop" id="mdDel">
+  <div class="modal">
+    <div class="mh"><h3>🗑️ 글 삭제</h3><button class="x" data-close="mdDel">✕</button></div>
+    <div class="mb"><p id="delMsg">이 글을 서재에서 삭제할까요?</p></div>
+    <div class="mf">
+      <button class="btn" data-close="mdDel">취소</button>
+      <button class="btn danger" id="delOk">삭제</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 모달: AI 도구 ===== -->
+<div class="backdrop" id="mdAi">
+  <div class="modal">
+    <div class="mh"><h3>✨ Gemini AI 도구</h3><button class="x" data-close="mdAi">✕</button></div>
+    <div class="mb">
+      <p id="aiHint">본문 내용을 바탕으로 AI가 도와드립니다.</p>
+      <div class="keybar">
+        <button class="keylink" id="aiKeyToggle" type="button">🔑 API 키 설정</button>
+        <span class="keystate" id="aiKeyState">키 없음</span>
+      </div>
+      <div class="keypanel" id="aiKeyPanel">
+        <p class="keyhint">Google AI Studio에서 발급한 키를 붙여넣으세요. 키는 이 브라우저에만 저장되며 서버로 전송되지 않습니다.</p>
+        <input type="password" id="keyInput" placeholder="AIza... 로 시작하는 키를 붙여넣으세요">
+        <div class="keyrow">
+          <button class="btn" id="keyClear" type="button">키 비우기</button>
+          <button class="btn primary" id="keyOk" type="button">키 저장</button>
+        </div>
+        <div class="hint">키 없이도 앱의 모든 글쓰기·서재·전송 기능은 정상 작동합니다.</div>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn" id="aiContinue">✍️ 이어쓰기</button>
+        <button class="btn" id="aiPolish">🎨 문장 다듬기</button>
+        <button class="btn" id="aiIdea">💡 아이디어</button>
+      </div>
+      <div class="aiout" id="aiOut" style="display:none"></div>
+      <div style="display:flex;gap:7px;margin-top:12px;justify-content:flex-end">
+        <button class="btn" id="aiInsert" style="display:none">본문에 넣기</button>
+        <button class="btn" id="aiCopy" style="display:none">복사</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 모달: 문장 다듬기 결과 ===== -->
+<div class="backdrop" id="mdPolish">
+  <div class="modal">
+    <div class="mh"><h3>문장 다듬기</h3><button class="x" data-close="mdPolish">✕</button></div>
+    <div class="mb">
+      <p id="polishMode">기본 다듬기(오프라인) 결과입니다.</p>
+      <div class="polishgrid">
+        <div class="pcol">
+          <div class="plabel">다듬기 전</div>
+          <pre class="pbox" id="polishBefore"></pre>
+        </div>
+        <div class="pcol">
+          <div class="plabel">다듬은 후</div>
+          <pre class="pbox" id="polishAfter"></pre>
+        </div>
+      </div>
+      <div class="chips" id="polishRules"></div>
+      <div class="keyrow">
+        <button class="btn" id="polishAi" type="button">AI로 더 다듬기</button>
+        <button class="btn" id="polishCancel" type="button">취소</button>
+        <button class="btn primary" id="polishApply" type="button">적용</button>
+      </div>
+      <div class="hint">이어쓰기·아이디어·API 키 설정은 <button class="keylink" id="polishOpenAi" type="button">✨AI 도구</button>에서 할 수 있습니다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 모달: 범용 안내 ===== -->
+<div class="backdrop" id="mdInfo">
+  <div class="modal">
+    <div class="mh"><h3 id="infoTitle">안내</h3><button class="x" data-close="mdInfo">✕</button></div>
+    <div class="mb"><p id="infoBody" style="margin:0"></p></div>
+    <div class="mf"><button class="btn primary" data-close="mdInfo">확인</button></div>
+  </div>
+</div>
+
+<!-- ===== 모달: 버전 이력 ===== -->
+<div class="backdrop" id="mdVer">
+  <div class="modal">
+    <div class="mh"><h3 id="verTitle">📜 버전 이력</h3><button class="x" data-close="mdVer">✕</button></div>
+    <div class="mb">
+      <div class="verlist" id="verList"></div>
+    <div class="mf"><button class="btn primary" data-close="mdVer">닫기</button></div>
+  </div>
+</div>
+
+<!-- ===== 모달: 이력 · 휴지통 복구 ===== -->
+<div class="backdrop" id="mdRecover">
+  <div class="modal recover">
+    <div class="mh"><h3>🕘 이력 · 휴지통 복구</h3><button class="x" data-close="mdRecover">✕</button></div>
+    <div class="mb recoverbody" id="recoverBody"></div>
+    <div class="mf">
+      <button class="btn" id="snapNow">현재 초안 백업</button>
+      <button class="btn danger" id="trashEmpty">휴지통 비우기</button>
+      <button class="btn" id="btnVerHist" style="margin-right:auto">📜 버전 이력</button>
+      <button class="btn primary" data-close="mdRecover">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 모달: 가져오기 ===== -->
+<div class="backdrop" id="mdImport">
+  <div class="modal">
+    <div class="mh"><h3>📤 서재 가져오기</h3><button class="x" data-close="mdImport">✕</button></div>
+    <div class="mb">
+      <p id="importMsg">가져올 내용을 확인해 주세요.</p>
+      <p class="hint" style="margin:0">가져오기는 <b>JSON 백업 파일(.json)만</b> 지원합니다. 글의 ID·작성/수정 날짜·태그 같은 정보가 구조 그대로 담겨 있어야 복원할 수 있기 때문입니다. TXT·DOC·PDF는 읽기·공유용이라 다시 가져올 수 없습니다.<br>‘이어붙이기’는 같은 글이 이미 있으면 건너뜁니다. ‘덮어쓰기’는 지금 서재를 백업 파일의 내용으로 교체합니다.</p>
+      <div class="savedir">
+        <p class="sdmode" id="importMode" style="margin:0">JSON 파일을 이 창 위로 끌어다 놓아도 가져올 수 있습니다.</p>
+        <div class="sdrow" style="margin-top:8px">
+          <button class="btn" id="pickOpenDir" type="button">📁 열 폴더에서 고르기</button>
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn" data-close="mdImport">취소</button>
+      <button class="btn" id="importMerge">이어붙이기</button>
+      <button class="btn danger" id="importReplace">덮어쓰기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 모달: 내보내기 ===== -->
+<div class="backdrop" id="mdExport">
+  <div class="modal">
+    <div class="mh"><h3>📥 서재 내보내기</h3><button class="x" data-close="mdExport">✕</button></div>
+    <div class="mb">
+      <p><b>JSON</b>은 다시 <b>가져오기(복원)</b>가 가능한 백업용이고, 나머지는 <b>읽기·공유·인쇄</b>용입니다. 서재에 보관된 글이 기준입니다.</p>
+      <p class="hint" style="margin:0 0 8px">저장 폴더를 지정하면 그 안에 <b>날짜 폴더(예: 2026-10-15)</b>가 자동으로 만들어지고 파일은 그 안에 저장됩니다. 같은 이름이 이미 있으면 덮어쓰지 않고 <b>-2</b>를 붙여 따로 보관합니다.</p>
+      <div class="savedir">
+        <div class="sdrow">
+          <span class="sdname" id="dirName">저장 폴더 미지정</span>
+          <button class="btn" id="pickDir" type="button">📁 저장 폴더 지정</button>
+          <button class="btn" id="changeDir" type="button">📁 저장 폴더 변경</button>
+          <button class="btn" id="clearDir" type="button">지정 해제</button>
+        </div>
+        <p class="sdmode" id="dirMode">폴더를 한 번만 골라두면 다음부터 그 폴더로 바로 저장됩니다.</p>
+      </div>
+      <div class="expgrid">
+        <button class="expcard" id="expJson"><b>JSON</b><span>백업·복원용 · 가져오기 가능</span></button>
+        <button class="expcard" id="expTxt"><b>TXT</b><span>메모장용 순수 텍스트</span></button>
+        <button class="expcard" id="expMd"><b>Markdown (.md)</b><span>서식 있는 텍스트</span></button>
+        <button class="expcard" id="expDoc"><b>DOC</b><span>Word에서 열기</span></button>
+        <button class="expcard" id="expPdf"><b>PDF</b><span>인쇄 창에서 ‘PDF로 저장’</span></button>
+      </div>
+    </div>
+    <div class="mf"><button class="btn" data-close="mdExport">닫기</button></div>
+  </div>
+</div>
+
+<input type="file" id="importFile" accept=".json,application/json" hidden>
+<div class="dropzone" id="dropzone"><span>📄 JSON 백업 파일을 여기에 놓으면 서재로 가져옵니다</span></div>
+
+<div id="printArea"></div>
+
+<div id="toast"></div>
+
+<script id="app-js">
+(function () {
+  "use strict";
+
+  /* ===== 버전 이력 (자동 렌더링) =====
+     기능을 추가했으면 APP_VERSION을 올리고 RELEASE_LOG 맨 앞에 항목을 하나 추가합니다.
+     복구 화면의 버전 이력 모달이 이 데이터를 자동으로 그립니다. */
+  /* v13: 아이폰 키보드 대응 - 키보드가 올라오면 상단 고정 해제(글쓰기 화면이 메뉴박스 뒤로 숨는 현상 방지) */
+(function(){
+  var vv = window.visualViewport;
+  if (!vv) return;
+  function kbSync(){
+    document.body.classList.toggle("kb-open", (window.innerHeight - vv.height) > 120);
+  }
+  vv.addEventListener("resize", kbSync);
+  vv.addEventListener("scroll", kbSync);
+  kbSync();
+})();
+var APP_VERSION = "v13.1";
+  var RELEASE_LOG = [
+    { v:"v13.1", date:"2026-10-18", title:"영구 링크 게시(GitHub Pages)", body:"문장수집가를 GitHub Pages에 게시해 주소가 만료되지 않는 영구 링크를 만들었습니다. 홈 화면 아이콘도 앱과 같은 주소에서 불러오도록 바꿨습니다." },
+    { v:"v13", date:"2026-10-17", title:"앱처럼 열기 + 아이폰 키보드 겹침 수정", body:"아이폰 사파리에서 홈 화면에 추가하면 아이콘으로 전체화면 앱처럼 열립니다(PWA 껍데기). 글쓰기 중 키보드가 올라올 때 글쓰기 화면이 상단 메뉴박스 뒤로 숨던 문제를 고쳤습니다." },
+    { v: "v12", date: "2026-10-16", title: "최종본 확정",
+      body: "버전 12로 확정. 앱 안내 문구를 v12 기준으로 정리했고, 기존 저장 데이터(글·버전 기록)는 그대로 이어지도록 저장 형식을 유지했습니다." },
+    { v: "v11-2 ~ v11-4", date: "10/15 밤 ~ 10/16 새벽", title: "타이머 다듬기",
+      body: "타이머를 숫자만 남기도록 단순화하고 탭 조작을 확립했습니다(분 탭=시간 설정, 나머지 탭=시작·일시정지, 더블탭=처음으로). 툴바 맨 끝에 타이머를 편입하고 팝업이 잘리던 문제를 고쳤으며, 깜빡임 간격을 설정에서 직접 고르는 드롭다운(1·3·5·10초)으로 바꿨습니다. 남은 시간을 내림해 실제와 일치시키고, 실행 중 더블탭 되돌리기, 실행 중 시간 변경 시 흐른 만큼 남기고 이어가기(토스트 표시)를 더하고 안 쓰는 코드를 정리했습니다." },
+    { v: "v11", date: "10/15", title: "기계식 시계 타이머",
+      body: "저장 버튼을 무채색으로 다듬고, 포모도로 다이얼을 기계식 시계처럼 숫자가 넘어가는 타이머(시안 A안·아이보리 넘김 카드, 5초 간격)로 교체했습니다." },
+    { v: "v10", date: "9/30 ~ 10월 초", title: "날짜 폴더 저장",
+      body: "내보내기 날짜별 하위 폴더 자동 저장을 추가했습니다. 폴더 지정 미지원 브라우저용 우회 안내와 내보내기 형식 선택, 저장 폴더 도우미(마지막 폴더 기억)가 함께 들어갔습니다." },
+    { v: "v9", date: "9월 말", title: "사용 설명서",
+      body: "초보자용 사용 설명서를 만들었습니다. 기능이 한 자리에 정리된 완성 단계의 버전입니다." },
+    { v: "v1 ~ v8", date: "초기 개발", title: "기본 틀",
+      body: "글쓰기 기본 틀을 세웠습니다: 본문 편집기와 자동 저장, 서재 보관, 첫 줄 제목 자동 설정, 글감(영감) 카드, 이메일 전송, 내보내기(JSON·TXT·MD·DOC·PDF), 다크 모드, 복구(작성 이력·휴지통·이전 버전), 문장 다듬기(기본 다듬기 + AI 도구·API 키 브라우저 저장)." }
+  ];
+  function renderVerLog() {
+    var host = document.getElementById("verList");
+    var t = document.getElementById("verTitle");
+    if (t) t.textContent = "📜 버전 이력 (" + APP_VERSION + ")";
+    if (!host) return;
+    host.innerHTML = "";
+    RELEASE_LOG.forEach(function (r) {
+      var card = document.createElement("div");
+      card.className = "ver";
+      var vh = document.createElement("div");
+      vh.className = "vh";
+      var b = document.createElement("b");
+      b.textContent = r.v;
+      var sp = document.createElement("span");
+      sp.textContent = r.date + (r.title ? " · " + r.title : "");
+      vh.appendChild(b); vh.appendChild(sp);
+      var p = document.createElement("p");
+      p.textContent = r.body;
+      card.appendChild(vh); card.appendChild(p);
+      host.appendChild(card);
+    });
+  }
+  var STORE_KEY = "vigaonda.munjang.v1";
+  var MAIL_TO = "tollot@naver.com";
+  var AI_MODEL = "gemini-2.0-flash";
+
+  var DEFAULT_PROMPTS = [
+    "오늘 하루 중 가장 오래 바라본 것을 한 문장으로 적어보기",
+    "지금 창밖의 풍경을 소리 없이 묘사해보기",
+    "누군가에게 오래 미뤄둔 말이 있다면, 그 첫 문장을 써보기",
+    "내가 가장 좋아하는 계절의 냄새를 문장으로 옮겨보기",
+    "십 년 뒤의 나에게 보내는 편지 첫 줄 쓰기",
+    "오늘 스쳐 지나간 낯선 사람에게 이름을 지어주고, 그 사람의 하루를 상상해보기",
+    "지금 마음속에 있는 감정을 색 하나로 표현한다면?",
+    "내가 아끼는 물건 하나에 얽힌 기억을 꺼내보기",
+    "아무도 모르는 나만의 습관 한 가지 적어보기",
+    "비 오는 날의 창가를 배경으로 짧은 장면을 그려보기",
+    "내 인생에서 가장 조용했던 순간을 떠올려보기",
+    "오늘 누군가에게 고마웠던 일 한 가지",
+    "여행 가방에 꼭 넣는 물건 하나와 그 이유",
+    "지금 듣고 있는 소리들을 차례로 적어보기",
+    "문장 하나로 시작해, 끝내고 싶은 이야기의 마지막 문장을 먼저 써보기"
+  ];
+
+  var state = {
+    docs: [],
+    prompts: DEFAULT_PROMPTS.slice(),
+    userPrompts: [],
+    promptIdx: null,
+    storageOK: true,
+    warnedStorage: false,
+    apiKey: "",
+    draft: "",
+    draftAt: null,
+    editingId: null,
+    versions: {},
+    trash: [],
+    draftHistory: [],
+    timer: { total: 1500000, left: 1500000, running: false, endAt: null, sound: true, step: 3 },
+    theme: "",
+    view: "write",
+    query: ""
+  };
+
+  var els = {};
+  var autosaveTimer = null;
+  var pendingDeleteId = null;
+
+  /* ---------- 저장소 ---------- */
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (Array.isArray(d.docs)) state.docs = d.docs;
+      if (Array.isArray(d.prompts) && d.prompts.length) state.prompts = d.prompts;
+      if (Array.isArray(d.userPrompts)) {
+        state.userPrompts = d.userPrompts.filter(function (x) { return typeof x === "string" && x.trim(); });
+      } else if (Array.isArray(d.prompts)) {
+        // 예전 저장본에는 사용자 글감이 따로 없었으므로, 기본 글감이 아닌 항목을 ‘내 글감’으로 복원합니다.
+        state.userPrompts = d.prompts.filter(function (x) {
+          return typeof x === "string" && x.trim() && DEFAULT_PROMPTS.indexOf(x) < 0;
+        });
+      }
+      if (typeof d.apiKey === "string") state.apiKey = d.apiKey;
+      if (typeof d.draft === "string") state.draft = d.draft;
+      if (typeof d.draftAt === "number") state.draftAt = d.draftAt;
+      if (typeof d.theme === "string") state.theme = d.theme;
+      /* 안전 저장 데이터: 글별 이전 버전 · 휴지통 · 초안 이력 */
+      if (d.versions && typeof d.versions === "object") state.versions = d.versions;
+      if (Array.isArray(d.trash)) {
+        state.trash = d.trash.filter(function (t) { return t && t.doc && typeof t.doc.content === "string"; });
+      }
+      if (Array.isArray(d.draftHistory)) {
+        state.draftHistory = d.draftHistory.filter(function (h) { return h && typeof h.content === "string"; });
+      }
+      if (d.timer && typeof d.timer === "object") {
+        var tt = Number(d.timer.total);
+        state.timer = {
+          total: (tt >= 60000 && tt <= 10800000) ? tt : 1500000,
+          left: Math.max(0, Number(d.timer.left) || 0),
+          running: !!d.timer.running,
+          endAt: (typeof d.timer.endAt === "number") ? d.timer.endAt : null,
+          sound: d.timer.sound !== false,
+          step: (typeof d.timer.step === "number" && [1,3,5,10].indexOf(d.timer.step) >= 0)
+            ? d.timer.step : (d.timer.step5 === false ? 1 : 3)
+        };
+        if (!state.timer.running) state.timer.endAt = null;
+      }
+    } catch (e) {
+      console.warn("저장된 데이터를 읽지 못했습니다.", e);
+    }
+  }
+  function payload() {
+    return {
+      docs: state.docs,
+      prompts: DEFAULT_PROMPTS.concat(state.userPrompts || []),
+      userPrompts: state.userPrompts || [],
+      apiKey: state.apiKey,
+      draft: state.draft,
+      draftAt: state.draftAt,
+      theme: state.theme,
+      versions: state.versions || {},
+      trash: state.trash || [],
+      draftHistory: state.draftHistory || [],
+      timer: state.timer
+    };
+  }
+  function persist() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(payload()));
+      state.storageOK = true;
+      if (els.storeWarn) els.storeWarn.textContent = "";
+      return true;
+    } catch (e0) {
+      /* 저장 공간이 가득 찼을 가능성: 이력·휴지통을 줄여 한 번 더 시도합니다. (본문·서재는 그대로) */
+      try {
+        state.draftHistory = (state.draftHistory || []).slice(-6);
+        if ((state.trash || []).length > 5) state.trash = state.trash.slice(0, 5);
+        localStorage.setItem(STORE_KEY, JSON.stringify(payload()));
+        state.storageOK = true;
+        if (els.storeWarn) els.storeWarn.textContent = "";
+        return true;
+      } catch (e) {
+        state.storageOK = false;
+        if (els.storeWarn) els.storeWarn.textContent = "⚠️ 이 브라우저에서 저장이 차단되어, 새로고침하면 사라집니다.";
+        if (!state.warnedStorage) {
+          state.warnedStorage = true;
+          toast("저장 공간을 쓸 수 없어 이번 세션에서만 유지됩니다.");
+        }
+        return false;
+      }
+    }
+  }
+
+  /* ---------- 유틸 ---------- */
+  function $(id) { return document.getElementById(id); }
+  /* 안전 바인딩: 요소가 없거나 앞쪽 코드에서 예외가 나도 뒤 버튼들의 바인딩이 끊기지 않게 합니다. */
+  function on(id, ev, fn) {
+    var el = $(id);
+    if (!el) {
+      if (window.console) console.warn("[문장수집가] 요소를 찾지 못했습니다: #" + id);
+      return null;
+    }
+    el.addEventListener(ev, fn);
+    return el;
+  }
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  function stamp(ts) {
+    var d = new Date(ts);
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+      " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  function relTime(ts) {
+    var diff = Date.now() - ts;
+    var m = Math.floor(diff / 60000);
+    if (m < 1) return "방금 전";
+    if (m < 60) return m + "분 전";
+    var h = Math.floor(m / 60);
+    if (h < 24) return h + "시간 전";
+    var dd = Math.floor(h / 24);
+    if (dd < 7) return dd + "일 전";
+    return stamp(ts).slice(0, 10);
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function toast(msg) {
+    var t = els.toast;
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { t.classList.remove("show"); }, 2200);
+  }
+  function openModal(id) { $(id).classList.add("show"); }
+  function closeModal(id) { $(id).classList.remove("show"); }
+  function info(title, body) {
+    els.infoTitle.textContent = title;
+    els.infoBody.textContent = body;
+    openModal("mdInfo");
+  }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  /* ---------- 영감(글감) ---------- */
+  function promptPool() { return DEFAULT_PROMPTS.concat(state.userPrompts || []); }
+
+  /* 시작은 무작위, 이후 ‘다른 글감’은 순서대로 순환합니다.
+     내가 추가한 글감이 풀 뒤쪽에 묻혀 영영 안 나오는 일이 없도록 하기 위함입니다. */
+  function showInspire() {
+    var pool = promptPool();
+    if (!pool.length) return;
+    if (state.promptIdx == null) state.promptIdx = Math.floor(Math.random() * pool.length);
+    if (state.promptIdx >= pool.length) state.promptIdx = 0;
+    els.inspireText.textContent = pool[state.promptIdx];
+    state.promptIdx = (state.promptIdx + 1) % pool.length;
+  }
+
+  function openPromptEditor(open) {
+    var box = els.addBox;
+    if (!box) return;
+    if (open === false) { box.classList.remove("open"); return; }
+    box.classList.add("open");
+    if (els.promptInput) els.promptInput.value = "";
+    try { box.scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch (e) {}
+    setTimeout(function () {
+      try { if (els.promptInput) els.promptInput.focus(); } catch (e) {}
+    }, 50);
+  }
+
+  function addPrompt(value) {
+    var t = String(value == null ? "" : value).trim().replace(/\s+/g, " ");
+    if (!t) {
+      toast("글감 문장을 입력해 주세요.");
+      if (els.promptInput) els.promptInput.focus();
+      return false;
+    }
+    if (t.length > 120) t = t.slice(0, 120);
+    if (state.userPrompts.indexOf(t) >= 0) {
+      toast("이미 추가한 글감입니다.");
+      if (els.promptInput) els.promptInput.value = "";
+      return false;
+    }
+    state.userPrompts.push(t);
+    var saved = persist();
+    renderMyPrompts();
+    els.inspireText.textContent = t;
+    state.promptIdx = 0;               // 다음 ‘다른 글감’은 내 글감부터 순환
+    if (els.promptInput) els.promptInput.value = "";
+    toast(saved
+      ? "＋ 새 글감을 추가했습니다. (‘내가 추가한 글감’ 목록에서 확인하세요)"
+      : "＋ 글감을 추가했습니다. (저장이 차단되어 이번 세션에만 유지됩니다)");
+    return true;
+  }
+
+  function removePrompt(i) {
+    var t = state.userPrompts[i];
+    if (t == null) return;
+    state.userPrompts.splice(i, 1);
+    state.promptIdx = 0;
+    persist();
+    renderMyPrompts();
+    toast("글감을 삭제했습니다: " + (t.length > 18 ? t.slice(0, 18) + "…" : t));
+  }
+
+  function renderMyPrompts() {
+    if (!els.myPrompts) return;
+    var list = state.userPrompts || [];
+    if (els.myCount) els.myCount.textContent = list.length;
+    els.myPrompts.innerHTML = "";
+    if (!list.length) {
+      var e = document.createElement("div");
+      e.className = "empty";
+      e.style.padding = "2px 0";
+      e.style.textAlign = "left";
+      e.style.fontSize = "11.5px";
+      e.textContent = "아직 직접 추가한 글감이 없습니다. ‘＋ 글감 추가’를 눌러 나만의 글감을 만들어 보세요.";
+      els.myPrompts.appendChild(e);
+      return;
+    }
+    list.forEach(function (t, i) {
+      var row = document.createElement("div");
+      row.className = "prompt-item";
+
+      var span = document.createElement("span");
+      span.className = "p";
+      span.textContent = "✎ " + t;
+
+      var use = document.createElement("button");
+      use.type = "button";
+      use.className = "use";
+      use.textContent = "이 글감 사용";
+      use.addEventListener("click", function () {
+        els.inspireText.textContent = t;
+        toast("이 글감을 ‘오늘의 영감’으로 불러왔습니다.");
+      });
+
+      var rm = document.createElement("button");
+      rm.type = "button";
+      rm.className = "rm";
+      rm.title = "이 글감 삭제";
+      rm.textContent = "✕";
+      rm.addEventListener("click", function () { removePrompt(i); });
+
+      row.appendChild(span);
+      row.appendChild(use);
+      row.appendChild(rm);
+      els.myPrompts.appendChild(row);
+    });
+  }
+
+  /* ---------- 안전 저장: 초안 이력 · 휴지통 · 글 버전 ---------- */
+  var DRAFT_HIST_MAX = 40;
+  var TRASH_MAX = 50;
+  var VERSIONS_MAX = 12;
+  var trashArm = false;
+
+  /* 되돌릴 수 없는 동작(초기화·새 글·창 닫기) 직전에 현재 본문을 이력으로 남깁니다. */
+  function snapshotDraft(reason) {
+    var text = els.paper ? els.paper.value : "";
+    if (!String(text || "").trim()) return false;
+    var h = state.draftHistory;
+    var last = h.length ? h[h.length - 1] : null;
+    if (last && last.content === text) return false;
+    h.push({ at: Date.now(), content: text, reason: reason || "자동", title: makeTitle(text) });
+    while (h.length > DRAFT_HIST_MAX) h.shift();
+    updateSafety();
+    return true;
+  }
+  /* 서재 글을 덮어쓰기 전 상태를 버전으로 남깁니다. */
+  function pushVersion(doc, reason) {
+    if (!doc || typeof doc.content !== "string") return false;
+    var list = state.versions[doc.id] || (state.versions[doc.id] = []);
+    var last = list.length ? list[list.length - 1] : null;
+    if (last && last.content === doc.content) return false;
+    list.push({ at: Date.now(), content: doc.content, title: doc.title, tags: (doc.tags || []).slice(), reason: reason || "수정 전" });
+    while (list.length > VERSIONS_MAX) list.shift();
+    return true;
+  }
+  function updateSafety() {
+    if (!els.safetyInfo) return;
+    els.safetyInfo.textContent = "🛡️ 이력 " + state.draftHistory.length + "개 · 휴지통 " + state.trash.length + "개";
+  }
+  function note(txt) {
+    var p = document.createElement("p");
+    p.className = "note";
+    p.textContent = txt;
+    return p;
+  }
+  function recoverRow(title, prev, when, actions) {
+    var li = document.createElement("li");
+    var body = document.createElement("div");
+    body.className = "body";
+    var ttl = document.createElement("div");
+    ttl.className = "ttl";
+    ttl.textContent = title;
+    var pv = document.createElement("div");
+    pv.className = "prev";
+    pv.textContent = prev || "(내용 없음)";
+    body.appendChild(ttl);
+    body.appendChild(pv);
+    var w = document.createElement("span");
+    w.className = "when";
+    w.textContent = when;
+    li.appendChild(body);
+    li.appendChild(w);
+    (actions || []).forEach(function (a) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "rbtn" + (a.danger ? " dng" : "");
+      b.textContent = a.label;
+      b.addEventListener("click", function () { a.fn(b); });
+      li.appendChild(b);
+    });
+    return li;
+  }
+  function section(title, count, desc) {
+    var s = document.createElement("section");
+    s.className = "sec";
+    var h = document.createElement("h4");
+    h.textContent = title;
+    if (count != null) {
+      var c = document.createElement("span");
+      c.className = "c";
+      c.textContent = count + "개";
+      h.appendChild(c);
+    }
+    s.appendChild(h);
+    if (desc) s.appendChild(note(desc));
+    return s;
+  }
+  function renderRecover() {
+    var wrap = els.recoverBody;
+    if (!wrap) return;
+    wrap.innerHTML = "";
+
+    /* 1) 작성 중이던 초안 이력 */
+    var s1 = section("🕘 작성 중 내용(초안) 이력", state.draftHistory.length,
+      "자동 저장될 때 15초 간격으로 남긴 기록입니다. ‘초기화’나 ‘새 글’로 화면을 비웠거나 창을 닫아 내용이 사라졌을 때 여기서 되살릴 수 있습니다. (최근 " + DRAFT_HIST_MAX + "개 보관)");
+    if (!state.draftHistory.length) {
+      s1.appendChild(note("아직 기록이 없습니다. 글을 쓰면 자동으로 쌓입니다."));
+    } else {
+      var ul1 = document.createElement("ul");
+      ul1.className = "doc-list";
+      for (var i = state.draftHistory.length - 1; i >= 0; i--) {
+        (function (idx) {
+          var h = state.draftHistory[idx];
+          var prev = String(h.content).replace(/\s+/g, " ").trim().slice(0, 60);
+          ul1.appendChild(recoverRow(
+            (h.title || "(제목 없음)") + " · " + String(h.content).length + "자",
+            prev,
+            relTime(h.at) + " · " + (h.reason || "자동"),
+            [
+              { label: "이 내용 복구", fn: function () { restoreDraftEntry(idx); } },
+              { label: "📋 복사", fn: function () { copyText(h.content, "이력을 복사했습니다"); } }
+            ]
+          ));
+        })(i);
+      }
+      s1.appendChild(ul1);
+    }
+    wrap.appendChild(s1);
+
+    /* 2) 휴지통 */
+    var s2 = section("🗑️ 휴지통 (삭제한 글)", state.trash.length,
+      "서재에서 지운 글은 여기 남아 있습니다. ‘완전 삭제’를 누르기 전까지는 언제든 되돌릴 수 있습니다.");
+    if (!state.trash.length) {
+      s2.appendChild(note("휴지통이 비어 있습니다."));
+    } else {
+      var ul2 = document.createElement("ul");
+      ul2.className = "doc-list";
+      state.trash.forEach(function (t) {
+        var d = t.doc;
+        ul2.appendChild(recoverRow(
+          d.title || "(제목 없음)",
+          String(d.content || "").replace(/\s+/g, " ").trim().slice(0, 60),
+          relTime(t.deletedAt) + " 삭제",
+          [
+            { label: "♻️ 복원", fn: function () { restoreTrash(t.id); } },
+            { label: "완전 삭제", danger: true, fn: function (btn) { purgeTrash(t.id, btn); } }
+          ]
+        ));
+      });
+      s2.appendChild(ul2);
+    }
+    wrap.appendChild(s2);
+
+    /* 3) 서재 글의 이전 버전 */
+    var withVer = state.docs.filter(function (d) { return (state.versions[d.id] || []).length; });
+    var s3 = section("📚 서재 글의 이전 버전", withVer.length,
+      "저장한 글을 다시 열어 고치고 저장할 때마다 ‘수정 전’ 내용이 여기에 쌓입니다.");
+    if (!withVer.length) {
+      s3.appendChild(note("아직 기록된 버전이 없습니다."));
+    } else {
+      withVer.forEach(function (d) {
+        var list = state.versions[d.id];
+        var box = document.createElement("ul");
+        box.className = "doc-list";
+        for (var k = list.length - 1; k >= 0 && k >= list.length - 3; k--) {
+          (function (vi) {
+            var v = list[vi];
+            box.appendChild(recoverRow(
+              "「" + (d.title || "제목 없음") + "」 · " + String(v.content).length + "자",
+              String(v.content).replace(/\s+/g, " ").trim().slice(0, 60),
+              relTime(v.at) + " · " + (v.reason || "수정 전"),
+              [{ label: "이 버전으로 되돌리기", fn: function () { restoreVersion(d.id, vi); } }]
+            ));
+          })(k);
+        }
+        s3.appendChild(box);
+      });
+    }
+    wrap.appendChild(s3);
+    updateSafety();
+  }
+  function restoreDraftEntry(idx) {
+    var h = state.draftHistory[idx];
+    if (!h) return;
+    snapshotDraft("복구 직전 자동 보관");
+    state.editingId = null;
+    els.paper.value = h.content;
+    state.draft = h.content;
+    state.draftAt = Date.now();
+    persist();
+    refreshStats();
+    renderLibrary();
+    els.lastMod.textContent = stamp(state.draftAt);
+    setSaveState("이력에서 복구됨 · " + relTime(state.draftAt), true);
+    closeModal("mdRecover");
+    toast("🕘 이력에서 " + String(h.content).length + "자를 되살렸습니다.");
+    try { els.paper.focus(); } catch (e) {}
+  }
+  function restoreVersion(docId, vi) {
+    var d = null;
+    for (var i = 0; i < state.docs.length; i++) { if (state.docs[i].id === docId) { d = state.docs[i]; break; } }
+    var list = state.versions[docId];
+    if (!d || !list || !list[vi]) return;
+    pushVersion(d, "되돌리기 전");
+    var v = list[vi];
+    d.content = v.content;
+    d.title = v.title || makeTitle(v.content);
+    if (v.tags) d.tags = v.tags.slice();
+    d.updatedAt = Date.now();
+    persist();
+    renderLibrary();
+    refreshStats();
+    renderRecover();
+    toast("📚 「" + d.title + "」을(를) 이전 버전으로 되돌렸습니다.");
+  }
+  function moveToTrash(doc) {
+    for (var i = 0; i < state.trash.length; i++) {
+      if (state.trash[i].id === doc.id) state.trash.splice(i, 1);
+    }
+    state.trash.unshift({ id: doc.id, doc: JSON.parse(JSON.stringify(doc)), deletedAt: Date.now() });
+    while (state.trash.length > TRASH_MAX) state.trash.pop();
+  }
+  function restoreTrash(id) {
+    var idx = -1;
+    for (var i = 0; i < state.trash.length; i++) { if (state.trash[i].id === id) { idx = i; break; } }
+    if (idx < 0) return;
+    var doc = state.trash[idx].doc;
+    state.trash.splice(idx, 1);
+    var exists = false;
+    for (var j = 0; j < state.docs.length; j++) { if (state.docs[j].id === doc.id) exists = true; }
+    if (!exists) state.docs.push(doc);
+    persist();
+    renderLibrary();
+    renderRecover();
+    toast("♻️ 「" + (doc.title || "글") + "」을(를) 서재로 되돌렸습니다.");
+  }
+  function purgeTrash(id, btn) {
+    if (btn && btn.getAttribute("data-arm") !== "1") {
+      btn.setAttribute("data-arm", "1");
+      btn.textContent = "정말 삭제 (한 번 더)";
+      toast("한 번 더 누르면 완전히 지워집니다. 되돌릴 수 없습니다.");
+      setTimeout(function () {
+        btn.setAttribute("data-arm", "0");
+        btn.textContent = "완전 삭제";
+      }, 5000);
+      return;
+    }
+    state.trash = state.trash.filter(function (t) { return t.id !== id; });
+    persist();
+    renderRecover();
+    toast("🗑️ 완전히 삭제했습니다.");
+  }
+  function emptyTrash() {
+    if (!state.trash.length) { toast("휴지통이 이미 비어 있습니다."); return; }
+    if (!trashArm) {
+      trashArm = true;
+      if (els.trashEmpty) els.trashEmpty.textContent = "정말 비우기 (한 번 더)";
+      toast("한 번 더 누르면 휴지통 " + state.trash.length + "개가 완전히 지워집니다.");
+      setTimeout(function () {
+        trashArm = false;
+        if (els.trashEmpty) els.trashEmpty.textContent = "휴지통 비우기";
+      }, 5000);
+      return;
+    }
+    trashArm = false;
+    if (els.trashEmpty) els.trashEmpty.textContent = "휴지통 비우기";
+    state.trash = [];
+    persist();
+    renderRecover();
+    toast("🧹 휴지통을 비웠습니다.");
+  }
+
+  /* ---------- 편집기 ---------- */
+  function counts(text) {
+    var chars = text.replace(/\s/g, "").length;
+    var words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    return { chars: chars, words: words };
+  }
+  function makeTitle(text) {
+    var firstLine = (String(text || "").split("\n").find(function (l) { return l.trim(); }) || "").trim();
+    var t = firstLine
+      .replace(/^#{1,6}\s+/, "")
+      .replace(/^[>\-*+]\s+/, "")
+      .replace(/[*_`~]/g, "")
+      .trim();
+    if (!t) t = "제목 없는 문장";
+    return t.slice(0, 40);
+  }
+  function refreshStats() {
+    var c = counts(els.paper.value);
+    els.charCount.textContent = c.chars;
+    els.wordCount.textContent = c.words;
+    if (state.editingId) {
+      var d = state.docs.find(function (x) { return x.id === state.editingId; });
+      els.curTitle.textContent = d ? d.title : "제목 없음";
+      els.editMode.textContent = "서재 글 수정 중";
+    } else {
+      els.curTitle.textContent = els.paper.value.trim()
+        ? makeTitle(els.paper.value)
+        : "제목 없음 (저장 시 첫 줄로 자동 설정)";
+      els.editMode.textContent = "새 글 작성 중";
+    }
+    updateSafety();
+  }
+  function setSaveState(txt, ok) {
+    els.saveState.textContent = txt;
+    els.saveDot.className = ok ? "dot" : "dot off";
+  }
+  function autosave() {
+    state.draft = els.paper.value;
+    state.draftAt = Date.now();
+    /* 15초에 한 번은 되살릴 수 있는 ‘이력’을 남깁니다. */
+    var lastAt = state.draftHistory.length ? state.draftHistory[state.draftHistory.length - 1].at : 0;
+    if (Date.now() - lastAt > 15000) snapshotDraft("자동 저장");
+    var ok = persist();
+    if (ok) {
+      els.lastMod.textContent = stamp(state.draftAt);
+      els.autosaveInfo.textContent = "자동 저장: " + stamp(state.draftAt);
+      setSaveState("자동 저장됨 · " + relTime(state.draftAt), true);
+    }
+  }
+  function scheduleAutosave() {
+    clearTimeout(autosaveTimer);
+    setSaveState("저장 중…", false);
+    autosaveTimer = setTimeout(autosave, 400);
+  }
+
+  /* ---------- 서재 ---------- */
+  function renderLibrary() {
+    var list = els.docList;
+    list.innerHTML = "";
+    var q = (state.query || "").trim();
+    var all = state.docs.slice().sort(function (a, b) { return b.updatedAt - a.updatedAt; });
+    var docs = all.filter(function (d) { return matchesQuery(d, q); });
+    els.libCount.textContent = q ? docs.length + "편 / 전체 " + all.length + "편" : all.length + "편";
+    if (!all.length) {
+      els.libEmpty.textContent = "아직 보관된 글이 없습니다. 첫 문장을 써보세요.";
+      els.libEmpty.style.display = "block";
+    } else if (!docs.length) {
+      els.libEmpty.textContent = "‘" + q + "’와 일치하는 글을 찾지 못했습니다.";
+      els.libEmpty.style.display = "block";
+    } else {
+      els.libEmpty.style.display = "none";
+    }
+    docs.forEach(function (d, i) {
+      var li = document.createElement("li");
+      if (d.id === state.editingId) li.className = "active";
+      var preview = d.content.replace(/\s+/g, " ").trim().slice(0, 70);
+      var chips = (d.tags && d.tags.length)
+        ? '<div class="chips">' + d.tags.map(function (t) { return '<span class="chip">#' + esc(t) + "<\/span>"; }).join("") + "<\/div>"
+        : "";
+      li.innerHTML =
+        '<span class="num">' + (i + 1) + "<\/span>" +
+        '<div class="body">' +
+          '<div class="ttl">' + esc(d.title) + "<\/div>" +
+          '<div class="prev">' + esc(preview || "(빈 글)") + "<\/div>" +
+          chips +
+        "<\/div>" +
+        '<span class="when">' + esc(relTime(d.updatedAt)) + "<\/span>" +
+        '<button class="del" title="삭제">✕<\/button>';
+      li.addEventListener("click", function (ev) {
+        if (ev.target.classList.contains("del")) return;
+        openDoc(d.id);
+      });
+      li.querySelector(".del").addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        askDelete(d.id);
+      });
+      list.appendChild(li);
+    });
+  }
+  function openDoc(id) {
+    var d = state.docs.find(function (x) { return x.id === id; });
+    if (!d) return;
+    state.editingId = id;
+    els.paper.value = d.content;
+    els.tagInput.value = (d.tags || []).join(", ");
+    state.draft = d.content;
+    state.draftAt = d.updatedAt;
+    persist();
+    refreshStats();
+    renderLibrary();
+    els.lastMod.textContent = stamp(d.updatedAt);
+    setSaveState("서재에서 불러옴 · " + relTime(d.updatedAt), true);
+    toast("서재에서 「" + d.title + "」을(를) 불러왔습니다.");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function askDelete(id) {
+    var d = state.docs.find(function (x) { return x.id === id; });
+    if (!d) return;
+    pendingDeleteId = id;
+    els.delMsg.textContent = "「" + d.title + "」을(를) 서재에서 지울까요? 지운 글은 ‘🕘 복구’의 휴지통에 남아 있어 나중에 되돌릴 수 있습니다.";
+    openModal("mdDel");
+  }
+  function doDelete() {
+    if (!pendingDeleteId) return;
+    var target = null;
+    for (var i = 0; i < state.docs.length; i++) {
+      if (state.docs[i].id === pendingDeleteId) { target = state.docs[i]; break; }
+    }
+    if (target) {
+      pushVersion(target, "삭제 직전");
+      moveToTrash(target);   /* 완전 삭제 대신 휴지통으로 → ‘🕘 복구’에서 되돌릴 수 있습니다. */
+    }
+    state.docs = state.docs.filter(function (x) { return x.id !== pendingDeleteId; });
+    if (state.editingId === pendingDeleteId) state.editingId = null;
+    pendingDeleteId = null;
+    persist();
+    renderLibrary();
+    refreshStats();
+    updateSafety();
+    closeModal("mdDel");
+    toast("🗑️ 휴지통으로 옮겼습니다. ‘🕘 복구’에서 되돌릴 수 있습니다.");
+  }
+
+  /* ---------- 저장 / 새 글 ---------- */
+  function saveDoc() {
+    var text = els.paper.value;
+    if (!text.trim()) {
+      info("저장할 내용이 없습니다", "먼저 문장을 적어주세요. 상단의 ‘오늘의 영감’에서 글감을 본문에 넣어 시작할 수도 있습니다.");
+      return;
+    }
+    var title = makeTitle(text);
+    var tags = parseTags(els.tagInput.value);
+    els.tagInput.value = "";
+    var now = Date.now();
+
+    if (state.editingId) {
+      var d = state.docs.find(function (x) { return x.id === state.editingId; });
+      if (d) {
+        pushVersion(d, "수정 전");   /* 덮어쓰기 전 내용을 버전으로 남깁니다 */
+        d.content = text;
+        d.title = title;
+        d.tags = tags;
+        d.updatedAt = now;
+      }
+      persist();
+      state.editingId = null;
+      els.paper.value = "";
+      state.draft = "";
+      state.draftAt = null;
+      persist();
+      showInspire();
+      refreshStats();
+      renderLibrary();
+      els.lastMod.textContent = stamp(now);
+      setSaveState("서재에 보관됨 · " + relTime(now), true);
+      toast("💾 서재에 보관하고 새 글을 시작합니다.");
+      return;
+    }
+
+    state.docs.push({
+      id: "d" + now + "_" + Math.floor(Math.random() * 1000),
+      title: title,
+      content: text,
+      tags: tags,
+      createdAt: now,
+      updatedAt: now
+    });
+    state.draft = "";
+    state.draftAt = null;
+    persist();
+    els.paper.value = "";
+    showInspire();
+    refreshStats();
+    renderLibrary();
+    els.lastMod.textContent = stamp(now);
+    setSaveState("서재에 보관됨 · " + relTime(now), true);
+    toast("💾 「" + title + "」을(를) 서재에 보관했습니다.");
+  }
+  /* 새 글 시작: 확인 창을 거쳐 안전하게 비웁니다(기존 ‘초기화’ 기능을 흡수). */
+  function requestNewDoc() { openModal("mdReset"); }
+  function newDoc() {
+    snapshotDraft("새 글 시작 전");
+    state.editingId = null;
+    els.tagInput.value = "";
+    els.paper.value = "";
+    state.draft = "";
+    state.draftAt = null;
+    persist();
+    showInspire();
+    refreshStats();
+    renderLibrary();
+    setSaveState("새 글 작성 중", true);
+    closeModal("mdReset");
+    toast("📝 빈 페이지에서 새로 시작합니다.");
+    els.paper.focus();
+  }
+  /* 예전 이름 호환 */
+  function resetDraft() { newDoc(); }
+
+  /* ---------- 복사 (클립보드 폴백 포함) ---------- */
+  function legacyCopy(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-1000px";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+  function copyText(text, label) {
+    if (!text) { toast("복사할 내용이 없습니다."); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        toast("📋 " + (label || "복사했습니다") + ".");
+      }).catch(function () {
+        if (legacyCopy(text)) toast("📋 " + (label || "복사했습니다") + ".");
+        else info("복사할 수 없습니다", "브라우저가 클립보드 접근을 막았습니다. 본문을 직접 선택해 복사(Ctrl+C)해 주세요.");
+      });
+    } else if (legacyCopy(text)) {
+      toast("📋 " + (label || "복사했습니다") + ".");
+    } else {
+      info("복사할 수 없습니다", "브라우저가 클립보드 접근을 막았습니다. 본문을 직접 선택해 복사(Ctrl+C)해 주세요.");
+    }
+  }
+
+  /* ---------- 이메일 전송 ---------- */
+  function sendMail() {
+    var text = els.paper.value;
+    if (!text.trim()) { toast("보낼 내용이 없습니다."); return; }
+    var firstLine = (text.split("\n").find(function (l) { return l.trim(); }) || "").trim().slice(0, 40);
+    var subject = "[문장수집가] " + (firstLine || "나의 문장");
+    var body = text + "\n\n— 문장수집가";
+    var url = "mailto:" + MAIL_TO +
+      "?subject=" + encodeURIComponent(subject) +
+      "&body=" + encodeURIComponent(body);
+    window.location.href = url;
+    toast("✉️ 기본 메일 앱을 실행합니다.");
+  }
+
+  /* ---------- Gemini AI ---------- */
+  var lastAiText = "";
+  function aiPrompt(kind, text) {
+    var tail = String(text || "").slice(-3000);
+    var prompts = {
+      continue: "당신은 한국어 문학 편집자입니다. 아래 글의 흐름과 문체를 그대로 이어받아, 자연스럽게 이어질 다음 2~3문장만 쓰세요. 설명이나 인사말 없이 이어질 문장만 출력하세요.\n\n[지금까지의 글]\n" + tail,
+      polish: "당신은 한국어 교정 전문가입니다. 아래 글의 맞춤법과 문장부호를 바로잡고 표현을 매끄럽게 다듬어 주세요. 원문의 의미와 분위기는 유지하고, 다듬은 결과만 출력하세요.\n\n[원문]\n" + tail,
+      idea: "당신은 창작 파트너입니다. 아래 글의 흐름을 읽고, 이어서 전개해 볼 수 있는 새로운 방향이나 반전 아이디어를 한국어로 3가지 제안하세요. 각 항목은 한두 문장으로 간결하게.\n\n[지금까지의 글]\n" + tail
+    };
+    return prompts[kind];
+  }
+  function aiFetch(kind, text) {
+    var url = "https://generativelanguage.googleapis.com/v1beta/models/" + AI_MODEL +
+      ":generateContent?key=" + encodeURIComponent(state.apiKey);
+    return fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts: [{ text: aiPrompt(kind, text) }] }] })
+    }).then(function (r) {
+      return r.json().then(function (j) { return { ok: r.ok, j: j }; });
+    }).then(function (res) {
+      if (!res.ok) {
+        var msg = (res.j && res.j.error && res.j.error.message) || "알 수 없는 오류";
+        throw new Error(msg);
+      }
+      var out = "";
+      try { out = res.j.candidates[0].content.parts[0].text; } catch (e) { out = ""; }
+      if (!out) throw new Error("응답이 비어 있습니다.");
+      return out.trim();
+    });
+  }
+  function aiCall(kind, done) {
+    if (!state.apiKey) {
+      if ($("mdAi")) { openModal("mdAi"); }
+      refreshAiKey();
+      info("API 키가 필요합니다", "‘✨AI 도구’ 창의 ‘🔑 API 키 설정’에서 Google AI Studio 키를 등록해 주세요. 키는 이 브라우저에만 저장되며 서버로 전송되지 않습니다.");
+      return;
+    }
+    var text = els.paper.value.trim();
+    if (!text) { toast("본문을 먼저 적어주세요."); return; }
+    els.aiHint.innerHTML = '<span class="spin"><\/span> AI가 생각하는 중…';
+    els.aiOut.style.display = "block";
+    els.aiOut.textContent = "잠시만 기다려 주세요…";
+    els.aiInsert.style.display = "none";
+    els.aiCopy.style.display = "none";
+    if (typeof fetch !== "function") {
+      els.aiOut.textContent = "이 환경에서는 네트워크 요청을 지원하지 않습니다.";
+      els.aiHint.textContent = "오류가 발생했습니다.";
+      return;
+    }
+    aiFetch(kind, text).then(function (out) {
+      lastAiText = out;
+      els.aiOut.textContent = lastAiText;
+      els.aiHint.textContent = kind === "continue" ? "이어쓸 문장을 제안했습니다." :
+        kind === "polish" ? "다듬은 문장입니다." : "새로운 전개 아이디어입니다.";
+      els.aiInsert.style.display = kind === "idea" ? "none" : "inline-block";
+      els.aiCopy.style.display = "inline-block";
+      if (done) done();
+    }).catch(function (err) {
+      els.aiOut.textContent = "AI 호출에 실패했습니다.\n\n" + (err && err.message ? err.message : String(err));
+      els.aiHint.textContent = "오류가 발생했습니다.";
+      els.aiInsert.style.display = "none";
+      els.aiCopy.style.display = "none";
+    });
+  }
+  function insertAi() {
+    if (!lastAiText) return;
+    var cur = els.paper.value;
+    els.paper.value = cur + (cur.trim() ? "\n\n" : "") + lastAiText;
+    scheduleAutosave();
+    refreshStats();
+    if (state.view === "preview") setView("preview");
+    closeModal("mdAi");
+    toast("본문에 반영했습니다.");
+  }
+
+  /* ---------- 문장 다듬기: 오프라인 기본 규칙 + 선택적 AI ---------- */
+  var SPELL_FIX = [
+    ["됬", "됐"], ["몇일", "며칠"], ["오랫만", "오랜만"], ["왠만", "웬만"],
+    ["할께", "할게"], ["갯수", "개수"], ["역활", "역할"], ["금새", "금세"],
+    ["어의없", "어이없"], ["통채로", "통째로"], ["댓가", "대가"],
+    ["뵈요", "봬요"], ["되요", "돼요"]
+  ];
+  var polishState = { before: "", after: "", rules: [], source: "local" };
+
+  /* 주소·코드·숫자는 다듬기 규칙에서 건드리지 않도록 잠시 감춥니다. */
+  function maskProtected(s) {
+    var store = [];
+    function put(m) { store.push(m); return "\u0001" + (store.length - 1) + "\u0002"; }
+    var out = String(s)
+      .replace(/https?:\/\/[^\s)>\]]+/g, put)
+      .replace(/`[^`\n]*`/g, put)
+      .replace(/\d+(?:[.,]\d+)+/g, put)
+      .replace(/\u00a0|\u200b/g, " ");
+    return { text: out, store: store };
+  }
+  function unmaskProtected(s, store) {
+    return String(s).replace(/\u0001(\d+)\u0002/g, function (m, i) { return store[+i]; });
+  }
+  function localPolish(src) {
+    var m = maskProtected(src);
+    var t = m.text, rules = [];
+    function step(name, fn) {
+      var before = t;
+      t = fn(t);
+      if (t !== before) rules.push(name);
+    }
+    step("여러 칸·줄 끝 공백", function (x) { return x.replace(/[ \t]{2,}/g, " ").replace(/[ \t]+$/gm, ""); });
+    step("빈 줄 정리", function (x) { return x.replace(/\n{3,}/g, "\n\n"); });
+    step("문장부호 앞 공백 제거", function (x) { return x.replace(/[ \t]+([,.!?;:)\]}»”’…])/g, "$1"); });
+    step("문장부호 뒤 띄우기", function (x) {
+      return x.replace(/([,;:])(?![ \n])/g, "$1 ").replace(/([.!?])(?![ .!?\n])/g, "$1 ");
+    });
+    step("괄호·따옴표 안쪽 공백 제거", function (x) { return x.replace(/([({\[“‘])[ \t]+/g, "$1"); });
+    step("물음표·느낌표 중복 정리", function (x) { return x.replace(/([!?])\1+/g, "$1"); });
+    step("말줄임표 정리", function (x) { return x.replace(/\.{3,}|·{3,}|~{2,}/g, "…"); });
+    step("맞춤법 교정", function (x) {
+      SPELL_FIX.forEach(function (pp) { x = x.split(pp[0]).join(pp[1]); });
+      return x;
+    });
+    step("붙여 쓴 말 띄어쓰기", function (x) {
+      return x.replace(/([가-힣])(수)(있|없)/g, "$1 $2 $3")
+              .replace(/([가-힣])(것)(같)/g, "$1 $2 $3")
+              .replace(/([가-힣])(때)(문)/g, "$1 $2 $3");
+    });
+    var out = unmaskProtected(t, m.store).replace(/^\s+|\s+$/g, "");
+    return { out: out, rules: rules };
+  }
+  function polishRender() {
+    $("polishBefore").textContent = polishState.before;
+    $("polishAfter").textContent = polishState.after;
+    var box = $("polishRules");
+    box.innerHTML = "";
+    var list = polishState.source === "ai" ? ["AI(Gemini) 다듬기"] : (polishState.rules.length ? polishState.rules : ["고칠 곳 없음"]);
+    list.forEach(function (r) {
+      var c = document.createElement("span");
+      c.className = "chip";
+      c.textContent = r;
+      box.appendChild(c);
+    });
+  }
+  function polishModeText() {
+    var has = !!(state.apiKey && state.apiKey.length > 6);
+    $("polishAi").style.display = has ? "inline-block" : "none";
+    if (polishState.source === "ai") return "AI(Gemini)가 다듬은 결과입니다. ‘적용’을 누르면 본문에 반영됩니다.";
+    return has
+      ? "기본 다듬기(오프라인) 결과입니다. AI로 한 번 더 다듬을 수 있습니다."
+      : "기본 다듬기(오프라인) 결과입니다. API 키를 등록하면 AI가 더 자연스럽게 다듬어 줍니다.";
+  }
+  function polishNow() {
+    var text = els.paper.value;
+    if (!text.trim()) { info("다듬을 내용이 없습니다", "먼저 본문에 문장을 적어주세요."); return; }
+    var res = localPolish(text);
+    if (res.out === text) {
+      info("다듬을 것이 없습니다", "이미 문장부호와 띄어쓰기가 잘 정리되어 있습니다. AI 다듬기를 쓰려면 아래 ‘✨AI 도구’에서 API 키를 등록해 주세요.");
+      return;
+    }
+    polishState = { before: text, after: res.out, rules: res.rules, source: "local" };
+    polishRender();
+    $("polishMode").textContent = polishModeText();
+    openModal("mdPolish");
+  }
+  function polishApply() {
+    if (!polishState.after) return;
+    els.paper.value = polishState.after;
+    scheduleAutosave();
+    refreshStats();
+    if (state.view === "preview") setView("preview");
+    closeModal("mdPolish");
+    toast("문장을 다듬어 본문에 반영했습니다.");
+    els.paper.focus();
+  }
+  function polishAiRun() {
+    if (!state.apiKey) { info("API 키가 필요합니다", "‘✨AI 도구’ 창의 ‘🔑 API 키 설정’에서 Google AI Studio 키를 등록해 주세요. 키는 이 브라우저에만 저장됩니다."); return; }
+    if (typeof fetch !== "function") { info("AI를 쓸 수 없습니다", "이 환경에서는 네트워크 요청을 지원하지 않습니다. 기본 다듬기 결과를 적용해 주세요."); return; }
+    $("polishMode").innerHTML = '<span class="spin"><\/span> AI가 다듬는 중…';
+    $("polishAi").disabled = true;
+    aiFetch("polish", polishState.before).then(function (out) {
+      polishState.after = out;
+      polishState.source = "ai";
+      polishRender();
+      $("polishMode").textContent = polishModeText();
+      $("polishAi").disabled = false;
+    }).catch(function (err) {
+      $("polishMode").textContent = "AI 호출에 실패했습니다 (" + (err && err.message ? err.message : String(err)) + "). 기본 다듬기 결과를 그대로 적용할 수 있습니다.";
+      $("polishAi").disabled = false;
+    });
+  }
+  function polishOpenAi() {
+    closeModal("mdPolish");
+    refreshAiKey();
+    openModal("mdAi");
+  }
+
+  /* ---------- 테마 (다크 모드) ---------- */
+  function applyTheme(t) {
+    state.theme = (t === "dark") ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", state.theme);
+    var b = els.btnTheme;
+    if (b) {
+      var dark = state.theme === "dark";
+    b.textContent = (dark ? "라이트" : "다크");
+      b.title = dark ? "라이트 모드로 전환" : "다크 모드로 전환";
+    }
+  }
+  function initTheme() {
+    var t = state.theme;
+    if (t !== "dark" && t !== "light") {
+      t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+    }
+    applyTheme(t);
+  }
+  function toggleTheme() {
+    applyTheme(state.theme === "dark" ? "light" : "dark");
+    persist();
+    toast(state.theme === "dark" ? "🌙 다크 모드로 전환했습니다." : "☀️ 라이트 모드로 전환했습니다.");
+  }
+
+  /* ---------- 마크다운 미리보기 (내장 파서 · CDN 없음) ---------- */
+  function mdInline(s) {
+    s = s.replace(/`([^`]+)`/g, "<code>$1<\/code>");
+    s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1<\/strong>");
+    s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2<\/em>");
+    s = s.replace(/~~([^~]+)~~/g, "<del>$1<\/del>");
+    s = s.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1<\/a>');
+    return s;
+  }
+  /* 마크다운용 이스케이프: '<'·'&'·따옴표만 막고 '>'는 남겨 블록인용(>) 문법을 살립니다. */
+  function escMd(s) {
+    var map = { "&": "&amp;", "<": "&lt;", '"': "&quot;", "'": "&#39;" };
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return Object.prototype.hasOwnProperty.call(map, c) ? map[c] : c;
+    });
+  }
+  function mdToHtml(src) {
+    var text = escMd(String(src == null ? "" : src)).replace(/\r\n?/g, "\n");
+    var lines = text.split("\n");
+    var out = [];
+    var para = [];
+    var i = 0;
+    function flush() {
+      if (para.length) { out.push("<p>" + mdInline(para.join("<br>")) + "<\/p>"); para = []; }
+    }
+    while (i < lines.length) {
+      var ln = lines[i];
+      if (/^```/.test(ln)) {
+        var buf = [];
+        i++;
+        while (i < lines.length && !/^```/.test(lines[i])) { buf.push(lines[i]); i++; }
+        i++;
+        flush();
+        out.push("<pre><code>" + buf.join("\n") + "<\/code><\/pre>");
+        continue;
+      }
+      if (/^\s*$/.test(ln)) { flush(); i++; continue; }
+      var h = ln.match(/^(#{1,6})\s+(.*)$/);
+      if (h) { flush(); var lv = Math.min(h[1].length, 4); out.push("<h" + lv + ">" + mdInline(h[2]) + "<\/h" + lv + ">"); i++; continue; }
+      if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(ln)) { flush(); out.push("<hr>"); i++; continue; }
+      if (/^>\s?/.test(ln)) {
+        flush();
+        var q = [];
+        while (i < lines.length && /^>\s?/.test(lines[i])) { q.push(lines[i].replace(/^>\s?/, "")); i++; }
+        out.push("<blockquote>" + mdInline(q.join("<br>")) + "<\/blockquote>");
+        continue;
+      }
+      if (/^\s*([-*+]|\d+[.)])\s+/.test(ln)) {
+        flush();
+        var ordered = /^\s*\d+[.)]\s+/.test(ln);
+        var items = [];
+        while (i < lines.length && /^\s*([-*+]|\d+[.)])\s+/.test(lines[i])) {
+          items.push(lines[i].replace(/^\s*([-*+]|\d+[.)])\s+/, ""));
+          i++;
+        }
+        var tag = ordered ? "ol" : "ul";
+        out.push("<" + tag + ">" + items.map(function (t) { return "<li>" + mdInline(t) + "<\/li>"; }).join("") + "<\/" + tag + ">");
+        continue;
+      }
+      para.push(ln);
+      i++;
+    }
+    flush();
+    if (!out.length) return '<p class="md-empty">아직 내용이 없습니다. ‘글쓰기’에서 첫 문장을 적어보세요.<\/p>';
+    return out.join("\n");
+  }
+  function setView(v) {
+    state.view = (v === "preview") ? "preview" : "write";
+    var write = state.view === "write";
+    if (els.preview) {
+      els.paper.style.display = write ? "" : "none";
+      els.preview.style.display = write ? "none" : "block";
+      if (!write) els.preview.innerHTML = mdToHtml(els.paper.value);
+    }
+    if (els.btnViewWrite) els.btnViewWrite.classList.toggle("on", write);
+    if (els.btnViewPrev) els.btnViewPrev.classList.toggle("on", !write);
+    persist();
+  }
+
+  /* ---------- 검색 / 태그 ---------- */
+  function parseTags(v) {
+    return String(v == null ? "" : v).split(/[,\n]/).map(function (s) {
+      return s.trim().replace(/^#/, "");
+    }).filter(function (s) { return s.length; }).slice(0, 8);
+  }
+  function matchesQuery(d, q) {
+    if (!q) return true;
+    var hay = (d.title + " " + d.content + " " + (d.tags || []).join(" ")).toLowerCase();
+    return q.toLowerCase().split(/\s+/).filter(function (t) { return t.length; }).every(function (t) {
+      return hay.indexOf(t) >= 0;
+    });
+  }
+
+  /* ---------- 내보내기 / 가져오기 ---------- */
+  function repeatCh(ch, n) {
+    var s = "";
+    for (var i = 0; i < n; i++) s += ch;
+    return s;
+  }
+  function sortedDocs() {
+    return state.docs.slice().sort(function (a, b) { return b.updatedAt - a.updatedAt; });
+  }
+  function fileStamp() {
+    var d = new Date();
+    return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + "-" + pad(d.getHours()) + pad(d.getMinutes());
+  }
+  /* 저장용 날짜 문자열: 로컬 시간 기준 (UTC 아님) */
+  function dateFolderName(d) {
+    var x = d || new Date();
+    return x.getFullYear() + "-" + pad(x.getMonth() + 1) + "-" + pad(x.getDate());
+  }
+  /* 저장 창/다운로드 폴백용 파일명에 붙일 날짜 접두어 */
+  function datedName(name) { return dateFolderName(new Date()) + "_" + name; }
+  /* 같은 이름이 이미 있으면 -2, -3 … 을 붙여 덮어쓰지 않습니다 */
+  function uniqueNameIn(dir, name) {
+    var dot = name.lastIndexOf(".");
+    var base = dot > 0 ? name.slice(0, dot) : name;
+    var ext = dot > 0 ? name.slice(dot) : "";
+    function tryN(n) {
+      return dir.getFileHandle(base + "-" + n + ext).then(function () { return tryN(n + 1); })
+        ["catch"](function (e) {
+          if (e && e.name === "NotFoundError") return base + "-" + n + ext;
+          throw e;
+        });
+    }
+    return dir.getFileHandle(name).then(function () { return tryN(2); })
+      ["catch"](function (e) {
+        if (e && e.name === "NotFoundError") return name;
+        return name;
+      });
+  }
+  function downloadBlob(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+
+  /* ================= 저장 위치 도우미 =================
+     브라우저 보안상 file:// 페이지는 자기 폴더를 알 수 없고 그 폴더에 조용히 쓸 수도 없습니다.
+     그래서 “폴더를 한 번 지정해 두고 그 폴더로 저장”하는 방식으로 처리합니다.
+       · Chrome/Edge/Whale : showDirectoryPicker 로 폴더를 지정(IndexedDB에 기억) → 다음부터 무창 저장
+       · Firefox           : 폴더 지정 API가 없어 파일 저장 창을 띄웁니다(마지막 폴더를 기억함)
+     ================================================== */
+  var HAS_FS = (typeof window.showDirectoryPicker === "function") && (typeof window.showSaveFilePicker === "function");
+  var IDB_NAME = "vigaonda-fs", IDB_STORE = "dir";
+  var dirHandle = null;
+
+  function idbOpen() {
+    return new Promise(function (res, rej) {
+      try {
+        if (!window.indexedDB) { rej(new Error("no-idb")); return; }
+        var r = indexedDB.open(IDB_NAME, 1);
+        r.onupgradeneeded = function () { try { r.result.createObjectStore(IDB_STORE); } catch (e) {} };
+        r.onsuccess = function () { res(r.result); };
+        r.onerror = function () { rej(r.error || new Error("idb-error")); };
+      } catch (e) { rej(e); }
+    });
+  }
+  function idbPut(key, val) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (res, rej) {
+        var tx = db.transaction(IDB_STORE, "readwrite");
+        tx.objectStore(IDB_STORE).put(val, key);
+        tx.oncomplete = function () { res(true); };
+        tx.onerror = function () { rej(tx.error); };
+      });
+    });
+  }
+  function idbGet(key) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (res, rej) {
+        var tx = db.transaction(IDB_STORE, "readonly");
+        var q = tx.objectStore(IDB_STORE).get(key);
+        q.onsuccess = function () { res(q.result || null); };
+        q.onerror = function () { rej(q.error); };
+      });
+    });
+  }
+  function idbDel(key) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (res) {
+        var tx = db.transaction(IDB_STORE, "readwrite");
+        try { tx.objectStore(IDB_STORE)["delete"](key); } catch (e) {}
+        tx.oncomplete = function () { res(true); };
+        tx.onerror = function () { res(false); };
+      });
+    });
+  }
+  function loadDirHandle() {
+    if (!HAS_FS) { refreshDirUI(); return; }
+    idbGet("dir").then(function (h) { dirHandle = h || null; refreshDirUI(); })
+      .catch(function () { refreshDirUI(); });
+  }
+  function canWrite(h) {
+    if (!h || !h.queryPermission) return Promise.resolve(true);
+    return h.queryPermission({ mode: "readwrite" }).then(function (s) {
+      if (s === "granted") return true;
+      if (!h.requestPermission) return false;
+      return h.requestPermission({ mode: "readwrite" }).then(function (s2) { return s2 === "granted"; });
+    })["catch"](function () { return false; });
+  }
+  function chooseFolder() {
+    if (!HAS_FS) { info("이 브라우저는 폴더 지정을 지원하지 않습니다", "Firefox는 ‘폴더 지정 저장’을 지원하지 않습니다. 대신 내보내기를 누르면 파일 저장 창이 열립니다. 주소창에 about:preferences#general 을 열고 ‘파일 저장 위치를 항상 묻기’를 켜 두면 마지막에 저장한 폴더(USB 폴더)를 기억합니다."); return; }
+    window.showDirectoryPicker({ mode: "readwrite" }).then(function (h) {
+      dirHandle = h;
+      return idbPut("dir", h).then(function () { refreshDirUI(); toast("📁 저장 폴더를 「" + h.name + "」로 지정했습니다."); });
+    })["catch"](function (e) {
+      if (e && e.name === "AbortError") return;
+      info("폴더를 지정하지 못했습니다", "브라우저가 폴더 접근을 허용하지 않았습니다. 폴더 자체는 지정되지만 사용 허가는 저장할 때 다시 물을 수 있습니다. 다시 시도해 주세요.");
+    });
+  }
+  function clearFolder() {
+    dirHandle = null;
+    idbDel("dir");
+    refreshDirUI();
+    toast("📁 지정을 해제했습니다. 이제 내보낼 때 저장 창이 열립니다.");
+  }
+  function refreshDirUI() {
+    var nm = $("dirName"), md = $("dirMode"), im = $("importMode");
+    var pick = $("pickDir"), clr = $("clearDir"), opn = $("pickOpenDir"), chg = $("changeDir");
+    if (nm) nm.textContent = dirHandle ? ("저장 폴더: " + dirHandle.name) : "저장 폴더 미지정";
+    if (pick) pick.style.display = (HAS_FS && !dirHandle) ? "inline-block" : "none";
+    if (chg) chg.style.display = (HAS_FS && dirHandle) ? "inline-block" : "none";
+    if (clr) clr.style.display = (HAS_FS && dirHandle) ? "inline-block" : "none";
+    if (opn) opn.style.display = HAS_FS ? "inline-block" : "none";
+    if (md) md.textContent = !HAS_FS
+      ? "이 브라우저(Firefox)는 폴더 지정 저장을 지원하지 않습니다. 대신 파일 이름 앞에 날짜가 붙어 저장됩니다(예: " + dateFolderName(new Date()) + "_vigaonda-backup-20261015-1530.json). about:preferences#general 에서 ‘파일 저장 위치를 항상 묻기’를 켜 두면 마지막 폴더가 기억되어 USB 폴더로 바로 저장할 수 있습니다."
+      : (dirHandle
+        ? "내보내기를 누르면 저장 창 없이 위 폴더 안의 날짜 폴더(예: " + dateFolderName(new Date()) + ")에 바로 저장됩니다. 브라우저를 새로 열면 폴더 사용 허용을 한 번 더 물을 수 있습니다."
+        : "아직 폴더를 고르지 않았습니다. 내보내기를 누르면 폴더 선택 창이 한 번 뜨고, 거기서 vigaonda-13-1.html 이 들어 있는 폴더(USB 폴더)를 고르세요. 다음부터는 그 폴더 안에 날짜 폴더(예: " + dateFolderName(new Date()) + ")가 만들어지고 그 안에 저장됩니다.");
+    if (im) im.textContent = HAS_FS
+      ? "‘열 폴더에서 고르기’는 지정한 폴더에서 바로 시작합니다. JSON 파일을 이 창 위로 끌어다 놓아도 됩니다."
+      : "JSON 파일을 이 창 위로 끌어다 놓아도 가져올 수 있습니다. Firefox는 마지막으로 파일을 고른 폴더를 기억합니다.";
+  }
+  /* 폴더가 없으면 이 자리에서 사용자에게 폴더를 고르게 함(첫 내보내기 1회) */
+  function ensureFolder() {
+    if (!HAS_FS) return Promise.resolve({ ok: false, reason: "noapi" });
+    if (dirHandle) return Promise.resolve({ ok: true, h: dirHandle });
+    return window.showDirectoryPicker({ mode: "readwrite" }).then(function (h) {
+      dirHandle = h;
+      return idbPut("dir", h).then(function () { refreshDirUI(); return { ok: true, h: h }; });
+    })["catch"](function (e) {
+      if (e && e.name === "AbortError") return { ok: false, reason: "cancelled" };
+      return { ok: false, reason: "error", error: (e && e.name) || "unknown" };
+    });
+  }
+  /* 지정 폴더 안에 날짜 폴더(YYYY-MM-DD)를 만들고 그 안에 저장합니다.
+     같은 이름이 있으면 -2, -3 … 을 붙여 기존 파일을 덮어쓰지 않습니다. */
+  function folderSave(blob, name) {
+    if (!dirHandle) return Promise.resolve(null);
+    var folder = dateFolderName(new Date());
+    return canWrite(dirHandle).then(function (ok) {
+      if (!ok) return { ok: false, error: "permission" };
+      return dirHandle.getDirectoryHandle(folder, { create: true }).then(function (sub) {
+        return uniqueNameIn(sub, name).then(function (finalName) {
+          return sub.getFileHandle(finalName, { create: true }).then(function (fh) {
+            return fh.createWritable().then(function (w) {
+              return w.write(blob).then(function () { return w.close(); });
+            }).then(function () { return { ok: true, fileName: finalName, folder: folder }; });
+          });
+        });
+      });
+    })["catch"](function (e) {
+      return { ok: false, error: (e && e.name) || "unknown" };
+    });
+  }
+  function saveFile(blob, name) {
+    if (typeof window.showSaveFilePicker === "function") {
+      return window.showSaveFilePicker({ suggestedName: name }).then(function (h) {
+        return h.createWritable().then(function (w) {
+          return w.write(blob).then(function () { return w.close(); });
+        });
+      }).then(function () { return { ok: true, mode: "picker" }; })
+        ["catch"](function (e) {
+          if (e && e.name === "AbortError") return { ok: false, cancelled: true };
+          downloadBlob(blob, datedName(name));
+          return { ok: true, mode: "download", fallback: true };
+        });
+    }
+    downloadBlob(blob, datedName(name));
+    return Promise.resolve({ ok: true, mode: "download" });
+  }
+  function openImportPicker() {
+    if (HAS_FS && window.showOpenFilePicker) {
+      var opt = { multiple: false, types: [{ description: "JSON 백업", accept: { "application/json": [".json"] } }] };
+      if (dirHandle) opt.startIn = dirHandle;
+      window.showOpenFilePicker(opt).then(function (hs) { return hs[0].getFile(); })
+        .then(function (f) { handleImportFile(f); })
+        ["catch"](function (e) { if (!(e && e.name === "AbortError")) { var el = $("importFile"); if (el) el.click(); } });
+      return;
+    }
+    var el2 = $("importFile");
+    if (el2) el2.click();
+  }
+  function setupDrop() {
+    var dz = $("dropzone");
+    if (!dz) return;
+    function hasFiles(e) { return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], "Files") >= 0; }
+    window.addEventListener("dragenter", function (e) { if (hasFiles(e)) { e.preventDefault(); dz.classList.add("on"); } });
+    window.addEventListener("dragover", function (e) { if (hasFiles(e)) e.preventDefault(); });
+    window.addEventListener("dragleave", function (e) { if (e.target === document || e.target === document.documentElement) dz.classList.remove("on"); });
+    window.addEventListener("drop", function (e) {
+      if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+      e.preventDefault();
+      dz.classList.remove("on");
+      handleImportFile(e.dataTransfer.files[0]);
+    });
+  }
+  function buildExport(kind, docs) {
+    var st = fileStamp();
+    if (kind === "json") {
+      var payload = { app: "문장수집가", version: 2, exportedAt: new Date().toISOString(), docs: state.docs, prompts: state.prompts };
+      return { blob: new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" }),
+        name: "vigaonda-backup-" + st + ".json",
+        msg: "서재 " + docs.length + "편을 JSON 백업으로 내보냈습니다." };
+    }
+    if (kind === "txt") {
+      return { blob: new Blob(["\ufeff" + buildTxt()], { type: "text/plain;charset=utf-8" }),
+        name: "vigaonda-" + st + ".txt", msg: "TXT로 내보냈습니다. (" + docs.length + "편)" };
+    }
+    if (kind === "md") {
+      return { blob: new Blob([buildMd()], { type: "text/markdown;charset=utf-8" }),
+        name: "vigaonda-" + st + ".md", msg: "Markdown으로 내보냈습니다. (" + docs.length + "편)" };
+    }
+    if (kind === "doc") {
+      return { blob: new Blob(["\ufeff" + buildDocHtml()], { type: "application/msword;charset=utf-8" }),
+        name: "vigaonda-" + st + ".doc", msg: "DOC로 내보냈습니다. Word에서 열어보세요. (" + docs.length + "편)" };
+    }
+    return null;
+  }
+  /* 내보내기: vigaonda-13-1.html 과 같은 폴더(지정 폴더)로 저장.
+     폴더 미지정 + 지원 브라우저면 여기서 폴더 선택 창을 한 번 띄운 뒤 그 폴더에 저장.
+     폴더 지정을 지원하지 않는 브라우저(Firefox 등)는 파일 저장 창/다운로드로 대체. */
+  function exportAs(kind) {
+    closeModal("mdExport");
+    if (kind === "pdf") { printLibrary(); return; }
+    var docs = sortedDocs();
+    if (!docs.length) {
+      info("내보낼 글이 없습니다", "서재에 보관된 글이 없습니다. 먼저 글을 저장한 뒤 다시 시도해 주세요.");
+      return;
+    }
+    var a = null;
+    try { a = buildExport(kind, docs); } catch (e) { a = null; }
+    if (!a) { info("내보내기 실패", "브라우저가 파일 생성을 막았습니다. 잠시 후 다시 시도해 주세요."); return; }
+    function afterSave(r2) {
+      if (!r2 || !r2.ok) return;
+      toast(r2.mode === "picker" ? ("📥 " + a.msg) : ("📥 저장 창을 열었습니다 — 파일 이름 앞에 날짜가 붙습니다. (" + datedName(a.name) + ")"));
+    }
+    ensureFolder().then(function (g) {
+      if (g.ok) {
+        return folderSave(a.blob, a.name).then(function (r) {
+          if (r && r.ok) { toast("📥 「" + r.folder + "/" + r.fileName + "」로 저장했습니다."); return; }
+          if (r && r.error === "permission") { toast("⚠️ 폴더 사용 허가가 풀렸습니다 — 저장 창으로 대신 저장합니다."); }
+          return saveFile(a.blob, a.name).then(afterSave);
+        });
+      }
+      if (g.reason === "cancelled") {
+        toast("내보내기를 취소했습니다. ‘저장 폴더 지정’을 눌러 폴더를 정해두면 다음부터 바로 저장됩니다.");
+        return;
+      }
+      return saveFile(a.blob, a.name).then(afterSave);
+    })["catch"](function () {
+      info("내보내기 실패", "브라우저가 파일 저장을 막았습니다. 잠시 후 다시 시도해 주세요.");
+    });
+  }
+  function docMetaLine(d, sep) {
+    var s = "작성: " + stamp(d.createdAt) + sep + "수정: " + stamp(d.updatedAt);
+    if (d.tags && d.tags.length) s += sep + "태그: " + d.tags.join(", ");
+    return s;
+  }
+  /* TXT: 순수 텍스트 (Windows 메모장 호환: BOM + CRLF) */
+  function buildTxt() {
+    var docs = sortedDocs();
+    var L = [];
+    L.push("문장수집가 — 서재 내보내기");
+    L.push("내보낸 날짜: " + stamp(Date.now()));
+    L.push("총 " + docs.length + "편");
+    L.push("");
+    docs.forEach(function (d, i) {
+      L.push(repeatCh("=", 56));
+      L.push((i + 1) + ". " + d.title);
+      L.push(docMetaLine(d, "  ·  "));
+      L.push(repeatCh("-", 56));
+      L.push(d.content);
+      L.push("");
+    });
+    L.push(repeatCh("=", 56));
+    L.push("— 문장수집가에서 내보냄");
+    return L.join("\r\n");
+  }
+  /* Markdown: 원문 그대로 + 문서 정보 헤더 */
+  function buildMd() {
+    var docs = sortedDocs();
+    var L = [];
+    L.push("# 문장수집가 — 서재");
+    L.push("");
+    L.push("> 내보낸 날짜: " + stamp(Date.now()) + " · 총 " + docs.length + "편");
+    L.push("");
+    docs.forEach(function (d, i) {
+      L.push("---");
+      L.push("");
+      L.push("## " + (i + 1) + ". " + d.title);
+      L.push("");
+      var meta = "- 작성: " + stamp(d.createdAt) + " / 수정: " + stamp(d.updatedAt);
+      if (d.tags && d.tags.length) meta += " / 태그: " + d.tags.map(function (t) { return "#" + t; }).join(" ");
+      L.push(meta);
+      L.push("");
+      L.push(d.content);
+      L.push("");
+    });
+    L.push("---");
+    L.push("");
+    L.push("*문장수집가에서 내보냄*");
+    return L.join("\n");
+  }
+  /* DOC: Word가 여는 HTML 문서 (meta charset UTF-8로 한글 보존) */
+  function buildDocHtml() {
+    var docs = sortedDocs();
+    var P = [];
+    P.push('<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">');
+    P.push('<head><meta charset="utf-8"><meta name="ProgId" content="Word.Document"><title>문장수집가 — 서재<\/title>');
+    P.push('<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print<\/w:View><w:Zoom>100<\/w:Zoom><\/w:WordDocument><\/xml><![endif]-->');
+    P.push('<style>@page{size:A4;margin:2cm}body{font-family:"Malgun Gothic","맑은 고딕",sans-serif;font-size:11pt;line-height:1.85;color:#000}' +
+      'h1{font-size:19pt;margin:0 0 4pt}.sub{font-size:10pt;color:#444;margin:0 0 18pt}' +
+      'h2{font-size:14pt;margin:18pt 0 3pt;border-bottom:1px solid #bbb;padding-bottom:3pt}' +
+      '.meta{font-size:9pt;color:#555;margin:0 0 8pt}' +
+      '.body{font-size:11pt}.body p{margin:6pt 0}.body ul,.body ol{margin:6pt 0 6pt 18pt}' +
+      '.body blockquote{margin:8pt 0;padding:4pt 10pt;border-left:3px solid #999;color:#444}' +
+      '.body h1,.body h2,.body h3{font-size:12pt;margin:10pt 0 4pt;border:0}' +
+      '.body code{font-family:Consolas,monospace;font-size:10pt}<\/style><\/head><body>');
+    P.push('<h1>문장수집가 — 서재<\/h1>');
+    P.push('<p class="sub">내보낸 날짜: ' + esc(stamp(Date.now())) + ' · 총 ' + docs.length + '편<\/p>');
+    docs.forEach(function (d, i) {
+      P.push('<h2>' + esc((i + 1) + ". " + d.title) + '<\/h2>');
+      P.push('<p class="meta">' + esc(docMetaLine(d, " · ")) + '<\/p>');
+      P.push('<div class="body">' + mdToHtml(d.content) + '<\/div>');
+    });
+    P.push('<\/body><\/html>');
+    return P.join("\n");
+  }
+  /* PDF: 인쇄용 화면을 만들어 브라우저 인쇄 창을 엽니다 */
+  function printLibrary() {
+    var docs = sortedDocs();
+    var head = "문장수집가 — 서재";
+    var sub = "내보낸 날짜: " + stamp(Date.now());
+    var body = "";
+    if (docs.length) {
+      sub += " · 총 " + docs.length + "편";
+      body = docs.map(function (d, i) {
+        return '<section class="print-doc"><h2>' + esc((i + 1) + ". " + d.title) + '<\/h2>' +
+          '<p class="meta">' + esc(docMetaLine(d, " · ")) + '<\/p>' +
+          '<div class="body">' + mdToHtml(d.content) + '<\/div><\/section>';
+      }).join("");
+    } else if (els.paper.value.trim()) {
+      head = makeTitle(els.paper.value);
+      sub = "작성 중인 글 · " + stamp(Date.now());
+      body = '<section class="print-doc"><div class="body">' + mdToHtml(els.paper.value) + '<\/div><\/section>';
+    } else {
+      info("인쇄할 내용이 없습니다", "서재에 보관된 글도, 작성 중인 글도 없습니다. 먼저 문장을 적어주세요.");
+      return;
+    }
+    els.printArea.innerHTML = '<h1 class="print-head">' + esc(head) + '<\/h1>' +
+      '<p class="print-sub">' + esc(sub) + '<\/p>' + body;
+    toast("🖨️ 인쇄 창에서 ‘PDF로 저장’을 선택하세요.");
+    setTimeout(function () { try { window.print(); } catch (e) {} }, 150);
+  }
+  
+  var pendingImport = null;
+  function handleImportFile(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var data = null;
+      try { data = JSON.parse(String(reader.result)); }
+      catch (e) {
+        info("가져올 수 없습니다", "파일을 JSON으로 읽지 못했습니다. 이 앱에서 내보낸 백업 파일(.json)인지 확인해 주세요.");
+        return;
+      }
+      var docs = null;
+      if (data && Array.isArray(data.docs)) docs = data.docs;
+      else if (Array.isArray(data)) docs = data;
+      if (!docs) {
+        info("형식이 올바르지 않습니다", "백업 파일에서 ‘docs’ 목록을 찾지 못했습니다. 이 앱의 백업 파일을 선택해 주세요.");
+        return;
+      }
+      var clean = [];
+      docs.forEach(function (d, idx) {
+        if (!d || typeof d.content !== "string") return;
+        var now = Date.now();
+        clean.push({
+          id: (typeof d.id === "string" && d.id) ? d.id : ("d" + now + "_" + idx),
+          title: (typeof d.title === "string" && d.title) ? d.title : "가져온 문장",
+          content: d.content,
+          tags: Array.isArray(d.tags) ? d.tags.slice(0, 8) : [],
+          createdAt: (typeof d.createdAt === "number") ? d.createdAt : now,
+          updatedAt: (typeof d.updatedAt === "number") ? d.updatedAt : now
+        });
+      });
+      if (!clean.length) {
+        info("가져올 글이 없습니다", "백업 파일에 저장된 글이 하나도 없습니다.");
+        return;
+      }
+      pendingImport = clean;
+      els.importMsg.textContent = "백업 파일에서 " + clean.length + "편의 글을 찾았습니다. 어떻게 반영할까요?";
+      openModal("mdImport");
+    };
+    reader.onerror = function () { info("가져올 수 없습니다", "파일을 읽지 못했습니다. 다시 시도해 주세요."); };
+    reader.readAsText(file, "utf-8");
+  }
+  function applyImport(mode) {
+    if (!pendingImport || !pendingImport.length) { closeModal("mdImport"); return; }
+    var added = 0, skipped = 0;
+    if (mode === "replace") {
+      added = pendingImport.length;
+      state.docs = pendingImport.slice();
+    } else {
+      var ids = {};
+      state.docs.forEach(function (d) { ids[d.id] = 1; });
+      pendingImport.forEach(function (d) {
+        if (ids[d.id]) { skipped++; return; }
+        ids[d.id] = 1;
+        state.docs.push(d);
+        added++;
+      });
+    }
+    pendingImport = null;
+    persist();
+    renderLibrary();
+    refreshStats();
+    closeModal("mdImport");
+    toast("📤 " + added + "편을 가져왔습니다" + (skipped ? " (중복 " + skipped + "편 건너뜀)" : "") + ".");
+  }
+
+  /* ---------- 집중 타이머 (헤더 우측 60분 다이얼) ---------- */
+  var fxHandle = null;   /* 1초 미만 간격으로 남은 시간을 다시 그리는 타이머 */
+  var fxAudio = null;    /* Web Audio: 외부 파일 없이 알림음 생성 */
+  var fxSavedAt = 0;
+  /* 표시 문자열. 간격이 1초보다 클 때는 내림해서 '정확히 간격마다 한 번'만 바뀌게 합니다. */
+  function fxDisplay(ms) {
+    var sec = Math.max(0, Math.round(ms / 1000));
+    if (state.timer.step > 1 && sec > 0) sec = Math.floor(sec / state.timer.step) * state.timer.step;
+    return pad(Math.floor(sec / 60)) + ":" + pad(sec % 60);
+  }
+  /* 넘김 카드 한 벌을 새로 만듭니다 (자릿수가 바뀔 때만 호출) */
+  function fxBuildClock(str) {
+    var el = els.fxClock;
+    if (!el) return;
+    el.innerHTML = "";
+    el.classList.toggle("compact", str.replace(":", "").length > 4);
+    var parts = str.split(":");
+    for (var g = 0; g < parts.length; g++) {
+      if (g > 0) {
+        var cs = document.createElement("span");
+        cs.className = "fxcolon";
+        cs.textContent = ":";
+        el.appendChild(cs);
+      }
+      /* 터치 영역: 앞쪽(분)=설정 팝업, 뒤쪽(초)=시작·일시정지 */
+      var grp = document.createElement("span");
+      grp.className = "fxgrp " + (g === 0 ? "fxgrp-min" : "fxgrp-sec");
+      for (var i = 0; i < parts[g].length; i++) {
+        var c = parts[g].charAt(i);
+        var d = document.createElement("span");
+        d.className = "fxd";
+        d.setAttribute("data-v", c);
+        d.innerHTML = '<span class="fxn">' + c + '</span>';
+        grp.appendChild(d);
+      }
+      el.appendChild(grp);
+    }
+  }
+  /* 바뀐 자리만 위 카드를 아래로 넘깁니다 */
+  function fxPaintClock(str) {
+    var el = els.fxClock;
+    if (!el) return;
+    var cells = el.querySelectorAll(".fxd");
+    if (cells.length !== str.replace(":", "").length) { fxBuildClock(str); return; }
+    var k = 0;
+    for (var i = 0; i < str.length; i++) {
+      var c = str.charAt(i);
+      if (c === ":") continue;
+      var d = cells[k++];
+      if (!d) continue;
+      var old = d.getAttribute("data-v");
+      if (old === c) continue;
+      var fp = d.querySelector(".fxf");
+      var np = d.querySelector(".fxn");
+      if (fp) fp.textContent = old;
+      if (np) np.textContent = c;
+      d.setAttribute("data-v", c);
+      d.classList.remove("flip");
+      void d.offsetWidth;
+      d.classList.add("flip");
+    }
+  }
+  function fxFmt(ms) {
+    var t = Math.max(0, Math.round(ms / 1000));
+    return pad(Math.floor(t / 60)) + ":" + pad(t % 60);
+  }
+  function fxLeft() {
+    var t = state.timer;
+    return (t.running && t.endAt) ? Math.max(0, t.endAt - Date.now()) : Math.max(0, t.left);
+  }
+  function fxRender() {
+    var t = state.timer;
+    var left = fxLeft();
+    /* 넘김 카드 숫자를 실제 남은 시간에 맞춰 갱신합니다. */
+    fxPaintClock(fxDisplay(left));
+    if (els.focusBox) {
+      els.focusBox.classList.toggle("running", !!t.running);
+      els.focusBox.classList.toggle("paused", !t.running && t.left > 0 && t.left < t.total);
+    }
+    try {
+      document.title = t.running ? ("⏱ " + fxDisplay(left) + " · 문장수집가") : "문장수집가";
+    } catch (e) {}
+  }
+  function fxInitSound() {
+    try {
+      if (!fxAudio) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) fxAudio = new AC();
+      }
+      if (fxAudio && fxAudio.state === "suspended" && fxAudio.resume) fxAudio.resume();
+    } catch (e) { fxAudio = null; }
+  }
+  /* 알림음: 외부 음원 없이 오실레이터로 ‘삐- 삐- 삐빅’을 만듭니다. */
+  function fxBeep() {
+    if (state.timer.sound === false) return;
+    fxInitSound();
+    if (!fxAudio || !fxAudio.createOscillator) return;
+    try {
+      var now = fxAudio.currentTime;
+      [0, 0.45, 0.9].forEach(function (off, i) {
+        var o = fxAudio.createOscillator();
+        var g = fxAudio.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(i === 2 ? 880 : 660, now + off);
+        g.gain.setValueAtTime(0.0001, now + off);
+        g.gain.exponentialRampToValueAtTime(0.24, now + off + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + off + 0.34);
+        o.connect(g); g.connect(fxAudio.destination);
+        o.start(now + off); o.stop(now + off + 0.4);
+      });
+    } catch (e) {}
+  }
+  function fxFinish() {
+    if (fxHandle) { clearInterval(fxHandle); fxHandle = null; }
+    if (els.focusBox) { els.focusBox.classList.add("done"); els.focusBox.classList.remove("running"); }
+    fxRender();
+    fxBeep();
+    toast("⏰ " + Math.round(state.timer.total / 60000) + "분 집중이 끝났습니다. 잠깐 쉬어가세요!");
+  }
+  function fxTick() {
+    var t = state.timer;
+    if (!t.running || !t.endAt) return;
+    var left = t.endAt - Date.now();
+    if (left <= 0) {
+      t.left = 0; t.running = false; t.endAt = null;
+      persist();
+      fxFinish();
+      return;
+    }
+    t.left = left;
+    fxRender();
+    if (Date.now() - fxSavedAt > 5000) { fxSavedAt = Date.now(); persist(); }
+  }
+  function fxStart() {
+    var t = state.timer;
+    if (t.running) return;
+    if (t.left <= 0) t.left = t.total;   /* 끝난 뒤 다시 시작하면 처음부터 */
+    t.running = true;
+    t.endAt = Date.now() + t.left;
+    fxInitSound();                        /* 사용자가 누른 순간이라 소리 재생이 허용됩니다 */
+    fxSavedAt = Date.now();
+    persist();
+    fxRender();
+    if (fxHandle) clearInterval(fxHandle);
+    fxHandle = setInterval(fxTick, 250);
+    toast("⏱ " + Math.round(t.total / 60000) + "분 집중을 시작합니다.");
+  }
+  function fxPause() {
+    var t = state.timer;
+    if (!t.running) return;
+    t.left = Math.max(0, t.endAt - Date.now());
+    t.running = false;
+    t.endAt = null;
+    if (fxHandle) { clearInterval(fxHandle); fxHandle = null; }
+    persist();
+    fxRender();
+    toast("⏸ 멈췄습니다. 남은 시간 " + fxFmt(t.left));
+  }
+  function fxReset() {
+    var t = state.timer;
+    t.running = false;
+    t.endAt = null;
+    t.left = t.total;
+    if (fxHandle) { clearInterval(fxHandle); fxHandle = null; }
+    if (els.focusBox) els.focusBox.classList.remove("done");
+    persist();
+    fxRender();
+    toast("↺ 타이머를 처음으로 되돌렸습니다.");
+  }
+  function fxSetMinutes(m, keep) {
+    var mins = Math.max(1, Math.min(180, Math.round(Number(m) || 25)));
+    var t = state.timer;
+    var wasRunning = t.running;
+    /* 실행 중(또는 중간까지 간 뒤) 시간을 바꾸면 이미 흐른 만큼은 남기고 이어갑니다 */
+    var elapsed = Math.max(0, Math.min(t.total, t.total - fxLeft()));
+    t.total = mins * 60000;
+    if (keep && elapsed > 0 && elapsed < t.total) {
+      t.left = t.total - elapsed;
+      t.running = wasRunning;
+      t.endAt = wasRunning ? (Date.now() + t.left) : null;
+    } else {
+      t.left = t.total;
+      t.running = false;
+      t.endAt = null;
+    }
+    if (fxHandle) { clearInterval(fxHandle); fxHandle = null; }
+    if (t.running) fxHandle = setInterval(fxTick, 250);
+    if (els.focusBox) els.focusBox.classList.remove("done");
+    if (els.fxMin) els.fxMin.value = mins;
+    fxRenderPresets();
+    persist();
+    fxRender();
+  }
+  function fxRenderPresets() {
+    var wrap = els.fxPresets;
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    [5, 10, 15, 25, 45, 60].forEach(function (m) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "fxpre" + (Math.round(state.timer.total / 60000) === m ? " on" : "");
+      b.textContent = m + "분";
+      b.addEventListener("click", function () {
+        fxSetMinutes(m, true);
+        toast("⏱ " + m + "분으로 설정했습니다." +
+          (state.timer.left < state.timer.total ? " 남은 시간 " + fxFmt(state.timer.left) : ""));
+      });
+      wrap.appendChild(b);
+    });
+  }
+  function fxOpenPop(open) {
+    if (!els.fxPop) return;
+    if (open === false) { els.fxPop.classList.remove("open"); return; }
+    fxRenderPresets();
+    els.fxPop.classList.add("open");
+  }
+
+  /* ---------- 초기 바인딩 ---------- */
+  function bind() {
+    els.paper = $("paper");
+    els.toast = $("toast");
+    els.docList = $("docList");
+    els.libEmpty = $("libEmpty");
+    els.libCount = $("libCount");
+    els.inspireText = $("inspireText");
+    els.lastMod = $("lastMod");
+    els.charCount = $("charCount");
+    els.wordCount = $("wordCount");
+    els.curTitle = $("curTitle");
+    els.editMode = $("editMode");
+    els.saveState = $("saveState");
+    els.saveDot = $("saveDot");
+    els.autosaveInfo = $("autosaveInfo");
+    els.infoTitle = $("infoTitle");
+    els.infoBody = $("infoBody");
+    els.delMsg = $("delMsg");
+    els.aiHint = $("aiHint");
+    els.aiOut = $("aiOut");
+    els.aiInsert = $("aiInsert");
+    els.aiCopy = $("aiCopy");
+    els.preview = $("preview");
+    els.tagInput = $("tagInput");
+    els.searchInput = $("searchInput");
+    els.btnTheme = $("btnTheme");
+    els.btnViewWrite = $("btnViewWrite");
+    els.btnViewPrev = $("btnViewPrev");
+    els.importMsg = $("importMsg");
+    els.printArea = $("printArea");
+    els.addBox = $("addBox");
+    els.promptInput = $("promptInput");
+    els.myPrompts = $("myPrompts");
+    els.myCount = $("myCount");
+    els.storeWarn = $("storeWarn");
+    els.recoverBody = $("recoverBody");
+    els.safetyInfo = $("safetyInfo");
+    els.trashEmpty = $("trashEmpty");
+    els.focusBox = $("focusBox");
+    els.fxClock = $("fxClock");
+    els.fxPop = $("fxPop");
+    els.fxPresets = $("fxPresets");
+    els.fxMin = $("fxMin");
+
+    els.paper.addEventListener("input", function () {
+      refreshStats();
+      scheduleAutosave();
+    });
+    els.paper.addEventListener("keydown", function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); saveDoc(); }
+    });
+
+    els.btnTheme.addEventListener("click", toggleTheme);
+    $("btnExport").addEventListener("click", function () { openModal("mdExport"); });
+    $("expJson").addEventListener("click", function () { exportAs("json"); });
+    $("expTxt").addEventListener("click", function () { exportAs("txt"); });
+    $("expMd").addEventListener("click", function () { exportAs("md"); });
+    $("expDoc").addEventListener("click", function () { exportAs("doc"); });
+    $("expPdf").addEventListener("click", function () { exportAs("pdf"); });
+    $("btnImport").addEventListener("click", function () { openImportPicker(); });
+    var pd = $("pickDir"); if (pd) pd.addEventListener("click", function () { chooseFolder(); });
+    var cd2 = $("changeDir"); if (cd2) cd2.addEventListener("click", function () { chooseFolder(); });
+    var cd = $("clearDir"); if (cd) cd.addEventListener("click", function () { clearFolder(); });
+    var od = $("pickOpenDir"); if (od) od.addEventListener("click", function () { openImportPicker(); });
+    setupDrop();
+    refreshDirUI();
+    $("importFile").addEventListener("change", function (e) {
+      var f = e.target.files && e.target.files[0];
+      handleImportFile(f);
+      e.target.value = "";
+    });
+    $("importMerge").addEventListener("click", function () { applyImport("merge"); });
+    $("importReplace").addEventListener("click", function () { applyImport("replace"); });
+
+    on("btnRecover", "click", function () { renderRecover(); openModal("mdRecover"); });
+    on("btnVerHist", "click", function () { renderVerLog(); openModal("mdVer"); });
+    on("snapNow", "click", function () {
+      var ok = snapshotDraft("수동 백업");
+      persist();
+      renderRecover();
+      toast(ok ? "🕘 현재 초안을 이력에 보관했습니다." : "지금 남길 새로운 내용이 없습니다.");
+    });
+    on("trashEmpty", "click", emptyTrash);
+
+    /* 집중 타이머: 숫자 터치로 조작 (분=설정 팝업, 초=시작·일시정지·되돌리기)
+       - 멈춰 있을 때 탭 1회 = 시작
+       - 시간이 가고 있을 때 탭 1회 = 일시정지 (숫자가 흐려짐)
+       - 일시정지 상태에서 탭 1회 = 이어서 시작 / 빠르게 2회(더블탭) = 처음으로 되돌리기
+       - 끝난 0:00 상태에서 탭 = 처음으로 되돌리기 */
+    var fxTapTid = null;   /* 일시정지 상태에서 더블탭 판정용 대기 타이머 */
+    on("fxClockBtn", "click", function (e) {
+      var g = (e.target && e.target.closest) ? e.target.closest(".fxgrp") : null;
+      if (g && g.classList.contains("fxgrp-min")) {
+        fxOpenPop(!(els.fxPop && els.fxPop.classList.contains("open")));
+        return;
+      }
+      fxOpenPop(false);
+      var t = state.timer;
+      if (t.running) {                             /* 실행 중: 탭=일시정지, 0.28초 안에 두 번=처음으로 */
+        fxPause();
+        fxTapTid = setTimeout(function () { fxTapTid = null; }, 280);
+        return;
+      }
+      if (t.left <= 0) { fxReset(); return; }      /* 0:00 끝남 → 처음으로 되돌리기 */
+      if (t.left < t.total) {                      /* 일시정지 상태 */
+        if (fxTapTid) {                            /* 0.28초 안에 두 번째 탭 = 더블탭 → 되돌리기 */
+          clearTimeout(fxTapTid); fxTapTid = null;
+          fxReset();
+          return;
+        }
+        fxTapTid = setTimeout(function () {        /* 더블탭이 아니면 잠깐 기다렸다 이어서 시작 */
+          fxTapTid = null;
+          fxStart();
+        }, 280);
+        return;
+      }
+      fxStart();                                   /* 처음(또는 되돌린 뒤) 멈춰 있음 → 시작 */
+    });
+    on("fxApply", "click", function () {
+      fxSetMinutes(els.fxMin ? els.fxMin.value : 25, true);
+      fxOpenPop(false);
+      var kept = state.timer.left < state.timer.total;
+      toast("⏱ " + Math.round(state.timer.total / 60000) + "분으로 설정했습니다." +
+        (kept ? " 남은 시간 " + fxFmt(state.timer.left) : ""));
+    });
+    if (els.fxMin) els.fxMin.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); var a = $("fxApply"); if (a) a.click(); }
+    });
+    var fxSoundEl = $("fxSound");
+    if (fxSoundEl) fxSoundEl.addEventListener("change", function () {
+      state.timer.sound = !!this.checked;
+      persist();
+      if (state.timer.sound) fxInitSound();
+      toast(fxSoundEl.checked ? "🔔 종료 알림음을 켰습니다." : "🔕 종료 알림음을 껐습니다.");
+    });
+    var fxStepEl = $("fxStep");
+    if (fxStepEl) fxStepEl.addEventListener("change", function () {
+      var v = Number(this.value);
+      state.timer.step = (v === 1 || v === 5 || v === 10) ? v : 3;
+      persist();
+      fxRender();
+      toast(state.timer.step === 1 ? "숫자를 1초마다 넘깁니다." : "숫자를 " + state.timer.step + "초 간격으로 넘깁니다.");
+    });
+    document.addEventListener("click", function (e) {
+      if (!els.fxPop || !els.fxPop.classList.contains("open")) return;
+      if (els.focusBox && els.focusBox.contains(e.target)) return;
+      fxOpenPop(false);
+    });
+    els.searchInput.addEventListener("input", function () {
+      state.query = els.searchInput.value;
+      renderLibrary();
+    });
+    els.searchInput.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { els.searchInput.value = ""; state.query = ""; renderLibrary(); }
+    });
+    els.tagInput.addEventListener("change", function () {
+      if (!state.editingId) { toast("🏷️ 태그는 글을 서재에 저장할 때 함께 기록됩니다."); return; }
+      var d = state.docs.find(function (x) { return x.id === state.editingId; });
+      if (d) {
+        d.tags = parseTags(els.tagInput.value);
+        d.updatedAt = Date.now();
+        persist();
+        renderLibrary();
+        toast("🏷️ 태그를 저장했습니다.");
+      }
+    });
+    els.btnViewWrite.addEventListener("click", function () { setView("write"); });
+    els.btnViewPrev.addEventListener("click", function () { setView("preview"); });
+
+    $("btnSave").addEventListener("click", saveDoc);
+    $("btnNew").addEventListener("click", requestNewDoc);
+    $("btnMail").addEventListener("click", sendMail);
+    $("aiKeyToggle").addEventListener("click", function () { toggleAiKey(); });
+    $("keyOk").addEventListener("click", function () {
+      state.apiKey = $("keyInput").value.trim();
+      persist();
+      refreshAiKey();
+      toast(state.apiKey ? "🔑 API 키를 저장했습니다." : "API 키를 비웠습니다.");
+    });
+    $("keyClear").addEventListener("click", function () {
+      state.apiKey = "";
+      persist();
+      refreshAiKey();
+      toast("API 키를 비웠습니다.");
+    });
+    on("btnNewInspire", "click", showInspire);
+    on("btnAddInspire", "click", function () {
+      if (!els.addBox) { toast("글감 입력창을 찾지 못했습니다. 페이지를 새로고침해 주세요."); return; }
+      if (els.addBox.classList.contains("open")) { openPromptEditor(false); return; }
+      openPromptEditor(true);
+    });
+    on("promptOk", "click", function () { addPrompt(els.promptInput ? els.promptInput.value : ""); });
+    on("promptCancel", "click", function () { openPromptEditor(false); });
+    if (els.promptInput) {
+      els.promptInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); addPrompt(els.promptInput.value); }
+        else if (e.key === "Escape") { openPromptEditor(false); }
+      });
+    }
+    $("btnUseInspire").addEventListener("click", function () {
+      var cur = els.paper.value;
+      els.paper.value = cur + (cur.trim() ? "\n\n" : "") + "✎ " + els.inspireText.textContent;
+      scheduleAutosave();
+      refreshStats();
+      if (state.view === "preview") setView("preview");
+      els.paper.focus();
+      toast("⤵ 글감을 본문에 넣었습니다.");
+    });
+    $("resetOk").addEventListener("click", newDoc);
+    $("delOk").addEventListener("click", doDelete);
+
+    refreshAiKey();
+    $("btnAi").addEventListener("click", function () { polishNow(); });
+    $("polishApply").addEventListener("click", polishApply);
+    $("polishCancel").addEventListener("click", function () { closeModal("mdPolish"); });
+    $("polishAi").addEventListener("click", polishAiRun);
+    $("polishOpenAi").addEventListener("click", polishOpenAi);
+    $("aiContinue").addEventListener("click", function () { aiCall("continue"); });
+    $("aiPolish").addEventListener("click", function () { aiCall("polish"); });
+    $("aiIdea").addEventListener("click", function () { aiCall("idea"); });
+    $("aiInsert").addEventListener("click", insertAi);
+    $("aiCopy").addEventListener("click", function () { copyText(lastAiText, "AI 결과를 복사했습니다"); });
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-close]"), function (b) {
+      b.addEventListener("click", function () { closeModal(b.getAttribute("data-close")); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".backdrop"), function (bd) {
+      bd.addEventListener("click", function (e) { if (e.target === bd) bd.classList.remove("show"); });
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        Array.prototype.forEach.call(document.querySelectorAll(".backdrop.show"), function (b) {
+          b.classList.remove("show");
+        });
+      }
+    });
+  }
+
+  /* ---------- AI 설정(키) ---------- */
+  function refreshAiKey() {
+    var has = !!(state.apiKey && state.apiKey.length > 6);
+    var hint = $("aiHint"), st = $("aiKeyState"), pn = $("aiKeyPanel"), inp = $("keyInput");
+    if (hint) hint.textContent = has
+      ? "본문 내용을 바탕으로 AI가 도와드립니다."
+      : "아직 API 키가 없습니다. 아래 ‘🔑 API 키 설정’에서 키를 등록하면 이어쓰기·다듬기·아이디어를 쓸 수 있습니다.";
+    if (st) { st.textContent = has ? "키 등록됨" : "키 없음"; st.className = "keystate" + (has ? " ok" : ""); }
+    if (inp) inp.value = state.apiKey || "";
+    if (pn) { if (has) pn.classList.remove("open"); else pn.classList.add("open"); }
+  }
+  function toggleAiKey() {
+    var pn = $("aiKeyPanel"); if (!pn) return;
+    var open = pn.classList.toggle("open");
+    var inp = $("keyInput");
+    if (open && inp) { inp.value = state.apiKey || ""; try { inp.focus(); } catch (e) {} }
+  }
+
+  function init() {
+    bind();
+    loadDirHandle();
+    load();
+    initTheme();
+    setView(state.view || "write");
+    if (state.query) els.searchInput.value = state.query;
+    els.paper.value = state.draft || "";
+    /* 임시 저장본은 있는데 이력이 비어 있으면, 그 본문을 첫 이력으로 남겨 둡니다. */
+    if (state.draft && state.draft.trim() && !state.draftHistory.length) {
+      state.draftHistory.push({ at: state.draftAt || Date.now(), content: state.draft, reason: "불러온 임시 저장본", title: makeTitle(state.draft) });
+    }
+    if (state.draftAt) {
+      els.lastMod.textContent = stamp(state.draftAt);
+      els.autosaveInfo.textContent = "자동 저장: " + stamp(state.draftAt);
+      setSaveState("불러온 임시 저장본 · " + relTime(state.draftAt), true);
+    } else {
+      setSaveState("자동 저장 준비됨", true);
+      els.autosaveInfo.textContent = "자동 저장: 대기 중";
+    }
+    showInspire();
+    renderMyPrompts();
+    refreshStats();
+    renderLibrary();
+
+    /* 타이머 복원: 창을 닫았다 열어도 이어서 돌아갑니다. */
+    try { fxBuildClock(fxDisplay(state.timer.left)); } catch (e) {}
+    var fxStepBoot = $("fxStep");
+    if (fxStepBoot) fxStepBoot.value = String(state.timer.step || 3);
+    var fxSoundBoot = $("fxSound");
+    if (fxSoundBoot) fxSoundBoot.checked = state.timer.sound !== false;
+    if (els.fxMin) els.fxMin.value = Math.round(state.timer.total / 60000);
+    fxRenderPresets();
+    if (state.timer.running) {
+      if (state.timer.endAt && state.timer.endAt > Date.now()) {
+        if (fxHandle) clearInterval(fxHandle);
+        fxHandle = setInterval(fxTick, 250);
+      } else {
+        state.timer.running = false;
+        state.timer.left = 0;
+        state.timer.endAt = null;
+        if (els.focusBox) els.focusBox.classList.add("done");
+        persist();
+      }
+    }
+    fxRender();
+
+    updateSafety();
+    if (!els.paper.value.trim() && state.draftHistory.length) {
+      toast("🕘 ‘복구’ 버튼에 이전에 쓰던 내용 " + state.draftHistory.length + "개가 남아 있습니다.");
+    }
+    window.addEventListener("beforeunload", function (e) {
+      if (els.paper.value !== state.draft) {
+        state.draft = els.paper.value;
+        state.draftAt = Date.now();
+        snapshotDraft("창 닫기");
+        persist();
+      }
+      /* 아직 서재에 보관하지 않은 글이 있으면 실수로 창을 닫지 않도록 한 번 더 확인합니다. */
+      if (els.paper.value.trim() && !state.editingId) {
+        e.preventDefault();
+        e.returnValue = "작성 중인 내용이 아직 서재에 저장되지 않았습니다. 창을 닫을까요? (내용은 ‘🕘 복구’ 이력에도 남아 있습니다)";
+        return e.returnValue;
+      }
+    });
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920" integrity="sha512-L0ha0OXavK/8okipN9F8BtP84dg9DUhPERbBXzwI6dgTA55d2+yweo3pn5CSFYs45/r8md2+xvUPtTdvTNRfjA==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
