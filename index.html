@@ -7,7 +7,7 @@
      { v:"v13", date:"YYYY-MM-DD", title:"한 줄 요약", body:"무엇을 바꿨는지" }
      → 복구 화면의 버전 이력 모달은 이 데이터를 자동으로 그린다.
        모달 HTML·CSS는 건드릴 필요 없다.
-  3. 파일 안의 "vigaonda-13-1" 안내 문구를 새 버전명으로 바꾼다.
+  3. 파일 안의 "vigaonda-14" 안내 문구를 새 버전명으로 바꾼다.
   ══════════════════════════════════════════════════════
 -->
 <html lang="ko">
@@ -217,6 +217,7 @@
     .focus{justify-content:center;min-width:0;grid-column:1/-1}
     .toolbar{grid-template-columns:repeat(4,minmax(0,1fr))}
     .fxpop{left:0;right:auto;width:100%}
+    .toolbar .tbtn{padding:12px 8px;font-size:13px}
   }
   @media(max-width:620px){
     .fxclock{font-size:19px}
@@ -468,6 +469,8 @@
     .brand h1{font-size:16.5px}
     textarea#paper{padding:18px 16px;font-size:16px;line-height:1.95;min-height:320px}
     .app{padding:12px 10px 48px}
+    input,textarea,select{font-size:16px !important}
+    body.kb-open .app{padding-bottom:calc(var(--kb-h,0px) + 24px)}
   }
   /* ---------- 신규: 세그먼트 / 검색 / 태그 / 마크다운 미리보기 ---------- */
   .head-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -884,14 +887,25 @@
   var vv = window.visualViewport;
   if (!vv) return;
   function kbSync(){
-    document.body.classList.toggle("kb-open", (window.innerHeight - vv.height) > 120);
+    var overlap = Math.max(0, window.innerHeight - vv.height);
+    var open = overlap > 120;
+    document.body.classList.toggle("kb-open", open);
+    document.documentElement.style.setProperty("--kb-h", open ? overlap + "px" : "0px");
   }
-  vv.addEventListener("resize", kbSync);
+  function caretUp(){
+    var el = document.activeElement;
+    if (el && (el.tagName === "TEXTAREA" || el.tagName === "INPUT")) {
+      setTimeout(function(){ el.scrollIntoView({ block: "nearest" }); }, 80);
+    }
+  }
+  vv.addEventListener("resize", function(){ kbSync(); caretUp(); });
   vv.addEventListener("scroll", kbSync);
+  document.addEventListener("focusin", caretUp);
   kbSync();
 })();
-var APP_VERSION = "v13.1";
+var APP_VERSION = "v14";
   var RELEASE_LOG = [
+    { v:"v14", date:"2026-10-18", title:"아이폰 글쓰기 화면 가림 수정", body:"아이폰에서 키보드가 올라오면 글쓰기 화면이 키보드 뒤로 내려가 지금 쓰는 줄이 안 보이던 문제를 고쳤습니다. 키보드 높이만큼 화면 아래에 여유 공간을 만들고 커서 줄을 항상 화면에 남게 했으며, 입력창을 탭할 때 화면이 멋대로 확대되던 현상도 잡았습니다(입력 글자 크기 16px 통일). 툴바 버튼 터치 영역도 넓혔습니다." },
     { v:"v13.1", date:"2026-10-18", title:"영구 링크 게시(GitHub Pages)", body:"문장수집가를 GitHub Pages에 게시해 주소가 만료되지 않는 영구 링크를 만들었습니다. 홈 화면 아이콘도 앱과 같은 주소에서 불러오도록 바꿨습니다." },
     { v:"v13", date:"2026-10-17", title:"앱처럼 열기 + 아이폰 키보드 겹침 수정", body:"아이폰 사파리에서 홈 화면에 추가하면 아이콘으로 전체화면 앱처럼 열립니다(PWA 껍데기). 글쓰기 중 키보드가 올라올 때 글쓰기 화면이 상단 메뉴박스 뒤로 숨던 문제를 고쳤습니다." },
     { v: "v12", date: "2026-10-16", title: "최종본 확정",
@@ -2191,7 +2205,7 @@ var APP_VERSION = "v13.1";
       ? "이 브라우저(Firefox)는 폴더 지정 저장을 지원하지 않습니다. 대신 파일 이름 앞에 날짜가 붙어 저장됩니다(예: " + dateFolderName(new Date()) + "_vigaonda-backup-20261015-1530.json). about:preferences#general 에서 ‘파일 저장 위치를 항상 묻기’를 켜 두면 마지막 폴더가 기억되어 USB 폴더로 바로 저장할 수 있습니다."
       : (dirHandle
         ? "내보내기를 누르면 저장 창 없이 위 폴더 안의 날짜 폴더(예: " + dateFolderName(new Date()) + ")에 바로 저장됩니다. 브라우저를 새로 열면 폴더 사용 허용을 한 번 더 물을 수 있습니다."
-        : "아직 폴더를 고르지 않았습니다. 내보내기를 누르면 폴더 선택 창이 한 번 뜨고, 거기서 vigaonda-13-1.html 이 들어 있는 폴더(USB 폴더)를 고르세요. 다음부터는 그 폴더 안에 날짜 폴더(예: " + dateFolderName(new Date()) + ")가 만들어지고 그 안에 저장됩니다.");
+        : "아직 폴더를 고르지 않았습니다. 내보내기를 누르면 폴더 선택 창이 한 번 뜨고, 거기서 vigaonda-14.html 이 들어 있는 폴더(USB 폴더)를 고르세요. 다음부터는 그 폴더 안에 날짜 폴더(예: " + dateFolderName(new Date()) + ")가 만들어지고 그 안에 저장됩니다.");
     if (im) im.textContent = HAS_FS
       ? "‘열 폴더에서 고르기’는 지정한 폴더에서 바로 시작합니다. JSON 파일을 이 창 위로 끌어다 놓아도 됩니다."
       : "JSON 파일을 이 창 위로 끌어다 놓아도 가져올 수 있습니다. Firefox는 마지막으로 파일을 고른 폴더를 기억합니다.";
@@ -2292,7 +2306,7 @@ var APP_VERSION = "v13.1";
     }
     return null;
   }
-  /* 내보내기: vigaonda-13-1.html 과 같은 폴더(지정 폴더)로 저장.
+  /* 내보내기: vigaonda-14.html 과 같은 폴더(지정 폴더)로 저장.
      폴더 미지정 + 지원 브라우저면 여기서 폴더 선택 창을 한 번 띄운 뒤 그 폴더에 저장.
      폴더 지정을 지원하지 않는 브라우저(Firefox 등)는 파일 저장 창/다운로드로 대체. */
   function exportAs(kind) {
@@ -3041,5 +3055,6 @@ var APP_VERSION = "v13.1";
 })();
 </script>
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4bc70e2c01a94c73b74392e4234840661791215815920" integrity="sha512-L0ha0OXavK/8okipN9F8BtP84dg9DUhPERbBXzwI6dgTA55d2+yweo3pn5CSFYs45/r8md2+xvUPtTdvTNRfjA==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","spa":2}' crossorigin="anonymous"></script>
 </body>
 </html>
