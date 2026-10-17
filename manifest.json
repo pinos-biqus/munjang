@@ -1,0 +1,19 @@
+{
+  "name": "문장수집가",
+  "short_name": "문장수집가",
+  "description": "영감을 모으고, 문장으로 남기는 나만의 서재",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#2b2622",
+  "theme_color": "#2b2622",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
