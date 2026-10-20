@@ -14,4 +14,5 @@ The Sentence Collector — GitHub Pages Edition (v13.1)
 11. Just past midnight, October 18, 2026
 12. editing and editing... 
 13. android ver- from v16
-14. 3:57 am 
+14. 3:57 am
+15. 10-20- update, icon? change v17
