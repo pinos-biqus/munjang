@@ -16,3 +16,4 @@ The Sentence Collector — GitHub Pages Edition (v13.1)
 13. android ver- from v16
 14. 3:57 am
 15. 10-20- update, icon? change v17
+16. 10-27 update, output error. v18
