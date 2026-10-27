@@ -18,3 +18,4 @@ The Sentence Collector — GitHub Pages Edition (v13.1)
 15. 10-20- update, icon? change v17
 16. 10-27 update, output error. v18
 17. update, v20; ai key input
+18. update, v21; sw.js .... like an apps.
